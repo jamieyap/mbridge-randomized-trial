@@ -12,7 +12,7 @@ load(file = file.path(path_staged_data, "dat_availability_wide.RData"))
 load(file = file.path(path_staged_data, "dat_availability_long.RData"))
 
 ###############################################################################
-# Read in raw data files
+# Read in raw paradata files
 ###############################################################################
 
 dat_paradata_sm1 <- read_xlsx(path = file.path(path_input_data, "SM Paradata_2.26.21.xlsx"), 
@@ -70,8 +70,8 @@ dat_paradata_sm4 <- dat_paradata_sm4 %>%
 
 dat_rand_invite_sm1 <- dat_paradata_sm1 %>% 
   filter(`Invite or Reminder` == "Invite") %>%
-  select(participant_id, `Product or Charity`, randtime) %>%
-  rename(randassign = `Product or Charity`)
+  select(participant_id, `Product or Charity`, randtime, `Completion Status`) %>%
+  rename(randassign = `Product or Charity`, status = `Completion Status`)
 
 dat_rand_invite_sm1 <- dat_rand_invite_sm1 %>% arrange(participant_id, randtime)
 # One participant ID was sent a reminder twice
@@ -80,8 +80,8 @@ dat_rand_invite_sm1 <- dat_rand_invite_sm1 %>% filter(!duplicated(dat_rand_invit
 
 dat_rand_invite_sm2 <- dat_paradata_sm2 %>% 
   filter(`Invite or Reminder` == "Invite") %>%
-  select(participant_id, `Product or Charity`, randtime) %>%
-  rename(randassign = `Product or Charity`)
+  select(participant_id, `Product or Charity`, randtime, `Completion Status`) %>%
+  rename(randassign = `Product or Charity`, status = `Completion Status`)
 
 dat_rand_invite_sm2 <- dat_rand_invite_sm2 %>% arrange(participant_id, randtime)
 # Each participant ID in this data frame was sent a reminder only once
@@ -90,8 +90,8 @@ dat_rand_invite_sm2 <- dat_rand_invite_sm2 %>% filter(!duplicated(dat_rand_invit
 
 dat_rand_invite_sm3 <- dat_paradata_sm3 %>% 
   filter(`Invite or Reminder` == "Invite") %>%
-  select(participant_id, `Product or Charity`, randtime) %>%
-  rename(randassign = `Product or Charity`)
+  select(participant_id, `Product or Charity`, randtime, `Completion Status`) %>%
+  rename(randassign = `Product or Charity`, status = `Completion Status`)
 
 dat_rand_invite_sm3 <- dat_rand_invite_sm3 %>% arrange(participant_id, randtime)
 # Each participant ID in this data frame was sent a reminder only once
@@ -100,8 +100,8 @@ dat_rand_invite_sm3 <- dat_rand_invite_sm3 %>% filter(!duplicated(dat_rand_invit
 
 dat_rand_invite_sm4 <- dat_paradata_sm4 %>% 
   filter(`Invite or Reminder` == "Invite") %>%
-  select(participant_id, `Product or Charity`, randtime) %>%
-  rename(randassign = `Product or Charity`)
+  select(participant_id, `Product or Charity`, randtime, `Completion Status`) %>%
+  rename(randassign = `Product or Charity`, status = `Completion Status`)
 
 dat_rand_invite_sm4 <- dat_rand_invite_sm4 %>% arrange(participant_id, randtime)
 # Each participant ID in this data frame was sent a reminder only once
@@ -115,28 +115,32 @@ dat_rand_invite_sm4 <- dat_rand_invite_sm4 %>% filter(!duplicated(dat_rand_invit
 current_cols <- colnames(dat_availability_wide)
 dat_availability_wide <- dat_rand_invite_sm1 %>%
   rename(randassign_1 = randassign,
-         randtime_1 = randtime) %>%
+         randtime_1 = randtime,
+         status_1 = status) %>%
   right_join(x = ., y = dat_availability_wide, by = "participant_id") %>%
   select(all_of(current_cols), everything())
 
 current_cols <- colnames(dat_availability_wide)
 dat_availability_wide <- dat_rand_invite_sm2 %>%
   rename(randassign_2 = randassign,
-         randtime_2 = randtime) %>%
+         randtime_2 = randtime,
+         status_2 = status) %>%
   right_join(x = ., y = dat_availability_wide, by = "participant_id") %>%
   select(all_of(current_cols), everything())
 
 current_cols <- colnames(dat_availability_wide)
 dat_availability_wide <- dat_rand_invite_sm3 %>%
   rename(randassign_3 = randassign,
-         randtime_3 = randtime) %>%
+         randtime_3 = randtime,
+         status_3 = status) %>%
   right_join(x = ., y = dat_availability_wide, by = "participant_id") %>%
   select(all_of(current_cols), everything())
 
 current_cols <- colnames(dat_availability_wide)
 dat_availability_wide <- dat_rand_invite_sm4 %>%
   rename(randassign_4 = randassign,
-         randtime_4 = randtime) %>%
+         randtime_4 = randtime,
+         status_4 = status) %>%
   right_join(x = ., y = dat_availability_wide, by = "participant_id") %>%
   select(all_of(current_cols), everything())
 
@@ -147,6 +151,7 @@ dat_availability_wide <- dat_availability_wide %>%
 # Update long data
 ###############################################################################
 
+# What is the randomization assignment?
 dat_availability_long <- dat_availability_wide %>%
   select(participant_id, randassign_1) %>%
   right_join(x = ., y = dat_availability_long, by = "participant_id")
@@ -163,6 +168,7 @@ dat_availability_long <- dat_availability_wide %>%
   select(participant_id, randassign_4) %>%
   right_join(x = ., y = dat_availability_long, by = "participant_id")
 
+# When was the randomization performed?
 dat_availability_long <- dat_availability_wide %>%
   select(participant_id, randtime_1) %>%
   right_join(x = ., y = dat_availability_long, by = "participant_id")
@@ -177,6 +183,24 @@ dat_availability_long <- dat_availability_wide %>%
 
 dat_availability_long <- dat_availability_wide %>%
   select(participant_id, randtime_4) %>%
+  right_join(x = ., y = dat_availability_long, by = "participant_id")
+
+# Was the self-monitoring survey associated with a particular
+# randomization assignment completed?
+dat_availability_long <- dat_availability_wide %>%
+  select(participant_id, status_1) %>%
+  right_join(x = ., y = dat_availability_long, by = "participant_id")
+
+dat_availability_long <- dat_availability_wide %>%
+  select(participant_id, status_2) %>%
+  right_join(x = ., y = dat_availability_long, by = "participant_id")
+
+dat_availability_long <- dat_availability_wide %>%
+  select(participant_id, status_3) %>%
+  right_join(x = ., y = dat_availability_long, by = "participant_id")
+
+dat_availability_long <- dat_availability_wide %>%
+  select(participant_id, status_4) %>%
   right_join(x = ., y = dat_availability_long, by = "participant_id")
 
 ###############################################################################
@@ -202,8 +226,18 @@ dat_availability_long <- dat_availability_long %>%
   ))
 
 dat_availability_long <- dat_availability_long %>%
+  mutate(status = case_when(
+    survey_number == 1 ~ status_1,
+    survey_number == 2 ~ status_2,
+    survey_number == 3 ~ status_3,
+    survey_number == 4 ~ status_4,
+    TRUE ~ as.character(NA)
+  ))
+
+dat_availability_long <- dat_availability_long %>%
   select(-randassign_1, -randassign_2, -randassign_3, -randassign_4,
-         -randtime_1, -randtime_2, -randtime_3, -randtime_4)
+         -randtime_1, -randtime_2, -randtime_3, -randtime_4,
+         -status_1, -status_2, -status_3, -status_4)
 
 dat_availability_long <- dat_availability_long %>% 
   arrange(desc(exclude_from_all), participant_id)
@@ -217,6 +251,5 @@ dat_rand_wide <- dat_availability_wide
 
 save(dat_rand_long, file = file.path(path_staged_data, "dat_rand_long.RData"))
 save(dat_rand_wide, file = file.path(path_staged_data, "dat_rand_wide.RData"))
-
 
 
