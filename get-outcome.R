@@ -11,6 +11,11 @@ path_staged_data <- Sys.getenv("path_staged_data")
 load(file = file.path(path_staged_data, "dat_rand_wide.RData"))
 load(file = file.path(path_staged_data, "dat_rand_long.RData"))
 
+load(file = file.path(path_staged_data, "dat_reminder_sm1.RData"))
+load(file = file.path(path_staged_data, "dat_reminder_sm2.RData"))
+load(file = file.path(path_staged_data, "dat_reminder_sm3.RData"))
+load(file = file.path(path_staged_data, "dat_reminder_sm4.RData"))
+
 ###############################################################################
 # Perform checks before brining in new data
 ###############################################################################
@@ -202,6 +207,78 @@ dat_rand_wide <- dat_rand_wide %>%
 dat_rand_long <- dat_rand_long %>%
   mutate(Y = replace(ALCdrink_SM, ALCdrink_SM == -99, NA)) %>%
   mutate(Y = if_else(is.na(Y), 0, 1))
+
+###############################################################################
+# When did the very first reminder occur?
+###############################################################################
+
+dat_first_reminder_sm1 <- dat_reminder_sm1 %>% 
+  filter(reminder_number == 1) %>%
+  rename(first_reminder_time_sm1 = randtime) %>%
+  select(participant_id, first_reminder_time_sm1)
+
+dat_first_reminder_sm2 <- dat_reminder_sm2 %>% 
+  filter(reminder_number == 1) %>%
+  rename(first_reminder_time_sm2 = randtime) %>%
+  select(participant_id, first_reminder_time_sm2)
+
+dat_first_reminder_sm3 <- dat_reminder_sm3 %>% 
+  filter(reminder_number == 1) %>%
+  rename(first_reminder_time_sm3 = randtime) %>%
+  select(participant_id, first_reminder_time_sm3)
+
+dat_first_reminder_sm4 <- dat_reminder_sm4 %>% 
+  filter(reminder_number == 1) %>%
+  rename(first_reminder_time_sm4 = randtime) %>%
+  select(participant_id, first_reminder_time_sm4)
+
+###############################################################################
+# Append information to existing data frame in wide format
+###############################################################################
+
+current_cols <- colnames(dat_rand_wide)
+dat_rand_wide <- right_join(x = dat_first_reminder_sm1, y = dat_rand_wide, by = "participant_id") %>%
+  select(all_of(current_cols), everything())
+
+current_cols <- colnames(dat_rand_wide)
+dat_rand_wide <- right_join(x = dat_first_reminder_sm2, y = dat_rand_wide, by = "participant_id") %>%
+  select(all_of(current_cols), everything())
+
+current_cols <- colnames(dat_rand_wide)
+dat_rand_wide <- right_join(x = dat_first_reminder_sm3, y = dat_rand_wide, by = "participant_id") %>%
+  select(all_of(current_cols), everything())
+
+current_cols <- colnames(dat_rand_wide)
+dat_rand_wide <- right_join(x = dat_first_reminder_sm4, y = dat_rand_wide, by = "participant_id") %>%
+  select(all_of(current_cols), everything())
+
+###############################################################################
+# Append information to existing data frame in long format
+###############################################################################
+
+dat_rand_long <- dat_first_reminder_sm1 %>%
+  right_join(x = ., y = dat_rand_long, by = "participant_id")
+
+dat_rand_long <- dat_first_reminder_sm2 %>%
+  right_join(x = ., y = dat_rand_long, by = "participant_id")
+
+dat_rand_long <- dat_first_reminder_sm3 %>%
+  right_join(x = ., y = dat_rand_long, by = "participant_id")
+
+dat_rand_long <- dat_first_reminder_sm4 %>%
+  right_join(x = ., y = dat_rand_long, by = "participant_id")
+
+dat_rand_long <- dat_rand_long %>%
+  mutate(first_reminder_time = case_when(
+    survey_number == 1 ~ first_reminder_time_sm1,
+    survey_number == 2 ~ first_reminder_time_sm2,
+    survey_number == 3 ~ first_reminder_time_sm3,
+    survey_number == 4 ~ first_reminder_time_sm4,
+    TRUE ~ as.POSIXlt(NA)
+  ))
+
+dat_rand_long <- dat_rand_long %>%
+  select(-first_reminder_time_sm1, -first_reminder_time_sm2, -first_reminder_time_sm3, -first_reminder_time_sm4)
 
 ###############################################################################
 # Save data files
