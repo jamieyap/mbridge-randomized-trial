@@ -9,7 +9,6 @@ path_staged_data <- Sys.getenv("path_staged_data")
 ###############################################################################
 
 dat_pin_masterlist <- read_xlsx(path = file.path(path_input_data, "M-Bridge Pin Master List.xlsx"), sheet = "M-Bridge Master List", col_types = c("numeric","text"))
-dat_baseline <- read.csv(file = file.path(path_input_data, "Baseline Data with HD variables added (2.8.21) final.csv"), header = TRUE, na.strings = "")
 dat_nonres_SM1 <- read_xlsx(path = file.path(path_input_data, "Stage 2 intervention groups 21.02.01.xlsx"), sheet = "SM 1", col_types = c("numeric","text","text","text","date","text"))
 dat_nonres_SM2 <- read_xlsx(path = file.path(path_input_data, "Stage 2 intervention groups 21.02.01.xlsx"), sheet = "SM 2", col_types = c("numeric","text","text","text","date","text"))
 dat_nonres_SM3 <- read_xlsx(path = file.path(path_input_data, "Stage 2 intervention groups 21.02.01.xlsx"), sheet = "SM 3", col_types = c("numeric","text","text","text","date","text"))
@@ -22,48 +21,35 @@ dat_nonres_all <- rbind(dat_nonres_SM1, dat_nonres_SM2, dat_nonres_SM3, dat_nonr
 # Begin data preparation steps
 ###############################################################################
 
-dat_analysis <- dat_pin_masterlist %>% 
+dat_masterlist_wide <- dat_pin_masterlist %>% 
   filter(Group == "Experimental Early" | Group == "Experimental Late") %>%
   rename(participant_id = Pin, group = Group)
 
-dat_analysis <- dat_nonres_all %>%
+dat_masterlist_wide <- dat_nonres_all %>%
   select(PIN, `SM flagged`) %>%
   rename(participant_id = PIN,
          sm_flagged = `SM flagged`) %>%
-  right_join(x = ., y = dat_analysis, by = "participant_id")
-
-dat_analysis <- dat_baseline %>%
-  select(External_Data_Reference, CharityChoice, ProductChoice) %>%
-  rename(participant_id = External_Data_Reference,
-         charity_choice = CharityChoice,
-         product_choice = ProductChoice) %>%
-  right_join(x = ., y = dat_analysis, by = "participant_id")
-
-dat_analysis <- dat_analysis %>% 
-  mutate(charity_choice = replace(charity_choice, charity_choice == "Charity of your future choice", NA),
-         product_choice = replace(product_choice, product_choice == "Product of your future choice", NA))
-
-dat_analysis <- dat_analysis %>% 
-  mutate(exclude_from_all = if_else(is.na(charity_choice) | is.na(product_choice), 1, 0))
+  right_join(x = ., y = dat_masterlist_wide, by = "participant_id")
 
 ###############################################################################
-# Create indicator for availability per decision point
+# For each decision point, create an indicator for whether randomization
+# should occur; this indicator is named 'coinflip'
 ###############################################################################
 
-dat_analysis <- dat_analysis %>%
-  mutate(availability_1 = 1) %>%
-  mutate(availability_2 = case_when(
+dat_masterlist_wide <- dat_masterlist_wide %>%
+  mutate(coinflip_1 = 1) %>%
+  mutate(coinflip_2 = case_when(
     sm_flagged == "SM 1" ~ 0,
     is.na(sm_flagged) ~ 1,
     TRUE ~ 1
   )) %>%
-  mutate(availability_3 = case_when(
+  mutate(coinflip_3 = case_when(
     sm_flagged == "SM 1" ~ 0,
     sm_flagged == "SM 2" ~ 0,
     is.na(sm_flagged) ~ 1,
     TRUE ~ 1
   )) %>%
-  mutate(availability_4 = case_when(
+  mutate(coinflip_4 = case_when(
     sm_flagged == "SM 1" ~ 0,
     sm_flagged == "SM 2" ~ 0,
     sm_flagged == "SM 3" ~ 0,
@@ -71,27 +57,52 @@ dat_analysis <- dat_analysis %>%
     TRUE ~ 1
   ))
 
-dat_analysis <- dat_analysis %>% 
-  arrange(desc(exclude_from_all), availability_1, availability_2, availability_3, availability_4, sm_flagged)
+dat_masterlist_wide <- dat_masterlist_wide %>% 
+  arrange(sm_flagged, coinflip_1, coinflip_2, coinflip_3, coinflip_4)
 
 ###############################################################################
 # Reshape from wide to long
 ###############################################################################
 
-dat_availability_long <- reshape(data = dat_analysis,
-        varying = c("availability_1", "availability_2", "availability_3", "availability_4"),
-        direction = "long", idvar = "participant_id", timevar = "survey_number", sep="_")
+dat_01 <- dat_masterlist_wide %>% 
+  mutate(decision_point = 1) %>%
+  select(participant_id, decision_point, sm_flagged, group, coinflip_1) %>%
+  rename(coinflip = coinflip_1)
 
-dat_availability_long <- dat_availability_long %>% arrange(desc(exclude_from_all), participant_id)
-row.names(dat_availability_long) <- 1:nrow(dat_availability_long)
+dat_02 <- dat_masterlist_wide %>% 
+  mutate(decision_point = 2) %>%
+  select(participant_id, decision_point, sm_flagged, group, coinflip_2) %>%
+  rename(coinflip = coinflip_2)
+
+dat_03 <- dat_masterlist_wide %>% 
+  mutate(decision_point = 3) %>%
+  select(participant_id, decision_point, sm_flagged, group, coinflip_3) %>%
+  rename(coinflip = coinflip_3)
+
+dat_04 <- dat_masterlist_wide %>% 
+  mutate(decision_point = 4) %>%
+  select(participant_id, decision_point, sm_flagged, group, coinflip_4) %>%
+  rename(coinflip = coinflip_4)
+
+dat_masterlist_long <- rbind(dat_01, dat_02, dat_03, dat_04)
+dat_masterlist_long <- dat_masterlist_long %>% arrange(sm_flagged, participant_id)
+
+###############################################################################
+# How many days elapsed since entering?
+###############################################################################
+
+dat_masterlist_long <- dat_masterlist_long %>%
+  mutate(when_entered_hrts = case_when(
+    group == "Experimental Early" ~ "2019-09-10 00:00:00",
+    group == "Experimental Late" ~ "2019-09-18 00:00:00",
+    TRUE ~ NA_character_
+  )) %>%
+  mutate(when_entered_hrts = strptime(when_entered_hrts, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
 
 ###############################################################################
 # Save data files
 ###############################################################################
 
-dat_availability_wide <- dat_analysis
-
-save(dat_availability_wide, file = file.path(path_staged_data, "dat_availability_wide.RData"))
-save(dat_availability_long, file = file.path(path_staged_data, "dat_availability_long.RData"))
-
+dat_masterlist <- dat_masterlist_long
+save(dat_masterlist, file = file.path(path_staged_data, "dat_masterlist.RData"))
 

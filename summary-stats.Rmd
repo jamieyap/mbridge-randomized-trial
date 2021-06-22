@@ -1,0 +1,64 @@
+---
+title: "Summary Statistics"
+author: |
+    |
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+geometry: margin=1in
+output: 
+  pdf_document:
+    number_sections: TRUE
+---
+
+```{r, echo = FALSE, message = FALSE}
+library(dplyr)
+library(readxl)
+
+path_input_data <- Sys.getenv("path_input_data")
+path_staged_data <- Sys.getenv("path_staged_data")
+
+###############################################################################
+# Load data for analysis after executing run-data-curation-pipeline.R
+###############################################################################
+
+load(file.path(path_staged_data, "dat_analysis.RData"))
+
+###############################################################################
+# Check empirical prob of being randomized to each intervention option
+###############################################################################
+dat_rand_probs_invite <- dat_analysis %>%
+  #filter(overall_indicator_invite == 1) %>%
+  filter(exclude_from_all == 0 & coinflip == 1) %>%
+  group_by(decision_point) %>%
+  summarise(n_charity = sum(randassign_invite == "Charity", na.rm=TRUE),
+            n_product = sum(randassign_invite == "Product", na.rm=TRUE))
+
+dat_rand_probs_invite <- dat_rand_probs_invite %>%
+  mutate(prob_charity = n_charity/(n_charity + n_product))
+
+###############################################################################
+# Check empirical prob of survey completion
+###############################################################################
+dat_response_probs <- dat_analysis %>%
+  #filter(overall_indicator_invite == 1) %>%
+  filter(exclude_from_all == 0 & coinflip == 1) %>%
+  group_by(decision_point) %>%
+  summarise(n_delta62 = sum(Y_delta62, na.rm=TRUE),
+            tot = n())
+
+dat_response_probs <- dat_response_probs %>%
+  mutate(percent_delta62 = n_delta62/tot)
+```
+
+
+```{r}
+print(dat_rand_probs_invite)
+```
+
+
+```{r}
+print(dat_response_probs)
+```
+
+
+
+
