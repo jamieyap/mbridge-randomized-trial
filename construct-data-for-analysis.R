@@ -13,6 +13,7 @@ load(file.path(path_staged_data, "dat_baseline.RData"))
 load(file.path(path_staged_data, "dat_invite.RData"))
 load(file.path(path_staged_data, "dat_reminder.RData"))
 load(file.path(path_staged_data, "dat_survey.RData"))
+
 ###############################################################################
 # If the participant had not selected a product or charity of their choice at 
 # baseline, re-code as 'none'
@@ -106,33 +107,6 @@ dat_masterlist <- dat_masterlist %>%
   arrange(desc(exclude_from_all), sm_flagged, participant_id)
 
 ###############################################################################
-# Sanity checks
-###############################################################################
-
-if(FALSE){
-  # Are there instances when the participant was supposed to be randomized
-  # but was not?
-  dat_masterlist %>%
-    filter(exclude_from_all==0) %>%
-    filter(coinflip==1) %>%
-    group_by(decision_point) %>%
-    summarise(count = sum(is.na(randassign_invite)))
-}
-
-###############################################################################
-# Construct an overall indicator for whether a row will be included in data for analysis
-###############################################################################
-
-dat_masterlist <- dat_masterlist %>%
-  mutate(overall_indicator_invite = if_else(exclude_from_all==0 & coinflip==1, 1, 0)) %>%
-  mutate(overall_indicator_invite = replace(overall_indicator_invite, (exclude_from_all == 0 & coinflip == 1) & (is.na(randassign_invite)), 0)) %>%
-  mutate(overall_indicator_invite = replace(overall_indicator_invite, 
-                                            (exclude_from_all == 0 & coinflip == 1) & 
-                                              (is.na(Freqalc1) | is.na(ALCdrinkqty_30days0) | 
-                                                 is.na(DGgender0) | is.na(DGrace_white0) | 
-                                                 is.na(baseline_anxiety) | is.na(baseline_depression) | is.na(baseline_stress)), 0))
-
-###############################################################################
 # Work with time variables: transform human-readable format time variables to
 # UNIX time format
 ###############################################################################
@@ -150,9 +124,9 @@ dat_masterlist <- dat_masterlist %>%
 
 if(FALSE){
   dat_masterlist %>%
-    mutate(compare1 = randtime_invite_unixts > randtime_first_reminder_unixts) %>%
+    mutate(compare = randtime_invite_unixts > randtime_first_reminder_unixts) %>%
     # output must be equal to zero if no issue
-    summarise(sum(compare1, na.rm=TRUE))
+    summarise(sum(compare, na.rm=TRUE))
 }
 
 ###############################################################################
@@ -177,8 +151,7 @@ dat_masterlist <- dat_masterlist %>%
          hrs_to_complete_survey = (endtime_unixts - begintime_unixts)/(60*60))
 
 ###############################################################################
-# Create indicators for whether the participant responded to the alcohol use
-# question ALCdrink within DELTA hours of the coin flip
+# Calculate summary statistics in preparation for constructing the outcome
 ###############################################################################
 
 # What is the minimum and maximum hours elapsed between invite and first reminder?
@@ -223,7 +196,63 @@ dat_masterlist %>%
             n_greater_than_24 = sum(hrs_to_complete_survey>24, na.rm=TRUE),
             n_greater_than_62 = sum(hrs_to_complete_survey>62, na.rm=TRUE))
 
-# From the above summary statistics, DELTA = 62
+###############################################################################
+# Construct an overall indicator for whether a row will be utilized to estimate
+# treatment effects
+###############################################################################
+
+# First, create an indicator for whether no missing data exist in any of the
+# variables listed in check_these_vars
+check_these_vars <- c("tot_days_with_any_drinks", "typical_num_drinks_per_day",
+                      "is_female", "is_male", "is_white",
+                      "baseline_anxiety", "baseline_depression", "baseline_stress",
+                      "days_elapsed_enter_to_invite")
+
+reported_these_vars <- dat_masterlist %>% 
+  ungroup(.) %>%
+  select(all_of(check_these_vars)) %>%
+  complete.cases(.)
+
+# Add new column
+dat_masterlist$reported_these_vars <- reported_these_vars*1
+
+# Second, are there instances when the participant was supposed to be randomized
+# but was not?
+
+# The summary statistics calculated in the following lines of code show that
+# there are two such cases
+dat_masterlist %>%
+  filter(exclude_from_all==0) %>%
+  filter(coinflip==1) %>%
+  group_by(decision_point) %>%
+  summarise(count = sum(is.na(randassign_invite)))
+
+with_randassign_invite <- dat_masterlist %>% 
+  ungroup(.) %>%
+  select(randassign_invite) %>%
+  complete.cases(.)
+
+# Add new column
+dat_masterlist$with_randassign_invite <- with_randassign_invite*1
+
+# Next, integrate the indicator variables
+# reported_these_vars, exclude_from_all, with_randassign_invite, and coinflip 
+# together into the variable overall_indicator_invite
+
+dat_masterlist <- dat_masterlist %>%
+  mutate(overall_indicator_invite = 0) %>%
+  mutate(overall_indicator_invite = replace(overall_indicator_invite, 
+                                            exclude_from_all==0 & coinflip==1 & reported_these_vars==1 & with_randassign_invite==1, 
+                                            1)) %>%
+  select(-reported_these_vars, -with_randassign_invite)
+
+###############################################################################
+# Construct the outcome variable:
+# Create indicators for whether the participant responded to the alcohol use
+# question ALCdrink within DELTA hours of the coin flip
+###############################################################################
+
+# From the above summary statistics, select DELTA = 62
 dat_masterlist <- dat_masterlist %>%
   mutate(Y_delta62 = if_else(!is.na(ALCdrink), 1, 0)) %>%
   mutate(Y_delta62 = replace(Y_delta62, hrs_elapsed_invite_to_begin_survey>62, 0))

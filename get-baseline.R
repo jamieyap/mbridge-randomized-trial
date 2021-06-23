@@ -62,7 +62,13 @@ dat_baseline <- dat_baseline %>%
   mutate(Freqalc1 = replace(Freqalc1, Freqalc1 == -99, NA),
          ALCdrinkqty_30days0 = replace(ALCdrinkqty_30days0, ALCdrinkqty_30days0 == -99, NA),
          DGgender0 = replace(DGgender0, (DGgender0 == 4) | (DGgender0 == -99), NA),
-         DGrace_white0 = replace(DGrace_white0, DGrace_white0 == -99, NA))
+         DGrace_white0 = replace(DGrace_white0, DGrace_white0 == -99, NA)) %>%
+  mutate(ALCdrinkqty_30days0 = replace(ALCdrinkqty_30days0, Freqalc1==0, 0),
+         is_female = if_else(DGgender0==1, 1, 0),
+         is_male = if_else(DGgender0==0, 1, 0)) %>%
+  rename(is_white = DGrace_white0,
+         typical_num_drinks_per_day = ALCdrinkqty_30days0,
+         tot_days_with_any_drinks = Freqalc1)
 
 ###############################################################################
 # Grab columns, including the Product or Charity of choice that was specified
@@ -76,9 +82,10 @@ dat_baseline <- dat_baseline %>%
          baseline_depression = depression,
          baseline_stress = stress) %>%
   select(participant_id, 
-         Freqalc1, ALCdrinkqty_30days0, DGgender0, DGrace_white0,
          baseline_charity_choice, baseline_product_choice,
-         baseline_anxiety, baseline_depression, baseline_stress)
+         baseline_anxiety, baseline_depression, baseline_stress,
+         tot_days_with_any_drinks, typical_num_drinks_per_day, 
+         is_female, is_male, is_white)
 
 ###############################################################################
 # Save data files
