@@ -134,11 +134,17 @@ if(FALSE){
 ###############################################################################
 
 dat_masterlist <- dat_masterlist %>%
-  mutate(tmpvar = strftime(randtime_invite_hrts, "%Y-%m-%d")) %>%
-  mutate(tmpvar = strptime(x = as.character(tmpvar), format = "%Y-%m-%d", tz = "UTC")) %>%
-  mutate(tmpvar_unixts = as.numeric(tmpvar)) %>%
-  mutate(days_elapsed_enter_to_invite = (tmpvar_unixts - when_entered_unixts)/(60*60*24)) %>%
-  select(-tmpvar, -tmpvar_unixts)
+  mutate(days_elapsed_since_entering = case_when(
+    group=="Experimental Early" & decision_point==1 ~ 0,
+    group=="Experimental Early" & decision_point==2 ~ 14,
+    group=="Experimental Early" & decision_point==3 ~ 28,
+    group=="Experimental Early" & decision_point==4 ~ 42,
+    group=="Experimental Late" & decision_point==1 ~ 14+0,
+    group=="Experimental Late" & decision_point==2 ~ 14+14,
+    group=="Experimental Late" & decision_point==3 ~ 14+28,
+    group=="Experimental Late" & decision_point==4 ~ 14+42,
+    TRUE ~ NA_real_
+  ))
 
 dat_masterlist <- dat_masterlist %>%
   group_by(participant_id) %>%
@@ -200,21 +206,24 @@ dat_masterlist %>%
 # Construct an overall indicator for whether a row will be utilized to estimate
 # treatment effects
 ###############################################################################
+dat_masterlist <- dat_masterlist %>% ungroup(.)
 
 # First, create an indicator for whether no missing data exist in any of the
 # variables listed in check_these_vars
 check_these_vars <- c("tot_days_with_any_drinks", "typical_num_drinks_per_day",
                       "is_female", "is_male", "is_white",
-                      "baseline_anxiety", "baseline_depression", "baseline_stress",
-                      "days_elapsed_enter_to_invite")
+                      "baseline_anxiety", "baseline_depression", "baseline_stress")
 
 reported_these_vars <- dat_masterlist %>% 
-  ungroup(.) %>%
   select(all_of(check_these_vars)) %>%
   complete.cases(.)
 
 # Add new column
 dat_masterlist$reported_these_vars <- reported_these_vars*1
+
+# Update exclude_from_all to account for additional exclusion criteria
+dat_masterlist <- dat_masterlist %>%
+  mutate(exclude_from_all = replace(exclude_from_all, reported_these_vars==0, 1))
 
 # Second, are there instances when the participant was supposed to be randomized
 # but was not?
@@ -227,24 +236,8 @@ dat_masterlist %>%
   group_by(decision_point) %>%
   summarise(count = sum(is.na(randassign_invite)))
 
-with_randassign_invite <- dat_masterlist %>% 
-  ungroup(.) %>%
-  select(randassign_invite) %>%
-  complete.cases(.)
-
-# Add new column
-dat_masterlist$with_randassign_invite <- with_randassign_invite*1
-
-# Next, integrate the indicator variables
-# reported_these_vars, exclude_from_all, with_randassign_invite, and coinflip 
-# together into the variable overall_indicator_invite
-
 dat_masterlist <- dat_masterlist %>%
-  mutate(overall_indicator_invite = 0) %>%
-  mutate(overall_indicator_invite = replace(overall_indicator_invite, 
-                                            exclude_from_all==0 & coinflip==1 & reported_these_vars==1 & with_randassign_invite==1, 
-                                            1)) %>%
-  select(-reported_these_vars, -with_randassign_invite)
+  mutate(coinflip = replace(coinflip, coinflip==1 & is.na(randassign_invite), 0))
 
 ###############################################################################
 # Construct the outcome variable:

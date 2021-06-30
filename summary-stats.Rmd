@@ -29,15 +29,15 @@ load(file.path(path_staged_data, "dat_analysis.RData"))
 
 dat_include <- dat_analysis %>%
   group_by(decision_point) %>%
-  summarise(percent_included = mean(overall_indicator_invite),
-            tot = nrow(overall_indicator_invite))
+  summarise(percent_included = mean(coinflip),
+            tot = nrow(coinflip))
 
 ###############################################################################
 # Check empirical prob of being randomized to each intervention option
 ###############################################################################
 
 dat_rand_probs_invite <- dat_analysis %>%
-  filter(overall_indicator_invite == 1) %>%
+  filter(coinflip == 1) %>%
   group_by(decision_point) %>%
   summarise(n_charity = sum(randassign_invite == "Charity", na.rm=TRUE),
             n_product = sum(randassign_invite == "Product", na.rm=TRUE))
@@ -50,7 +50,7 @@ dat_rand_probs_invite <- dat_rand_probs_invite %>%
 ###############################################################################
 
 dat_response_probs <- dat_analysis %>%
-  filter(overall_indicator_invite == 1) %>%
+  filter(coinflip == 1) %>%
   group_by(decision_point) %>%
   summarise(n_delta62 = sum(Y_delta62, na.rm=TRUE),
             tot = n())
