@@ -52,11 +52,11 @@ dat_rand_probs_invite <- dat_rand_probs_invite %>%
 dat_response_probs <- dat_analysis %>%
   filter(coinflip == 1) %>%
   group_by(decision_point) %>%
-  summarise(n_delta62 = sum(Y_delta62, na.rm=TRUE),
+  summarise(n_delta47 = sum(Y_delta47, na.rm=TRUE),
             tot = n())
 
 dat_response_probs <- dat_response_probs %>%
-  mutate(percent_delta62 = n_delta62/tot)
+  mutate(percent_delta47 = n_delta47/tot)
 ```
 
 

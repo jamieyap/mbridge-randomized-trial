@@ -197,10 +197,7 @@ dat_masterlist %>%
             maximum_hrs = max(hrs_to_complete_survey, na.rm=TRUE),
             q50 = quantile(hrs_to_complete_survey, probs = .50, na.rm=TRUE),
             q95 = quantile(hrs_to_complete_survey, probs = .95, na.rm=TRUE),
-            q98 = quantile(hrs_to_complete_survey, probs = .98, na.rm=TRUE),
-            n_greater_than_01 = sum(hrs_to_complete_survey>1, na.rm=TRUE),
-            n_greater_than_24 = sum(hrs_to_complete_survey>24, na.rm=TRUE),
-            n_greater_than_62 = sum(hrs_to_complete_survey>62, na.rm=TRUE))
+            q98 = quantile(hrs_to_complete_survey, probs = .98, na.rm=TRUE))
 
 ###############################################################################
 # Construct an overall indicator for whether a row will be utilized to estimate
@@ -245,10 +242,10 @@ dat_masterlist <- dat_masterlist %>%
 # question ALCdrink within DELTA hours of the coin flip
 ###############################################################################
 
-# From the above summary statistics, select DELTA = 62
+# From the above summary statistics, select DELTA = 47
 dat_masterlist <- dat_masterlist %>%
-  mutate(Y_delta62 = if_else(!is.na(ALCdrink), 1, 0)) %>%
-  mutate(Y_delta62 = replace(Y_delta62, hrs_elapsed_invite_to_begin_survey>62, 0))
+  mutate(Y_delta47 = if_else(!is.na(ALCdrink), 1, 0)) %>%
+  mutate(Y_delta47 = replace(Y_delta47, hrs_elapsed_invite_to_first_reminder>47, 0))
 
 ###############################################################################
 # Save data

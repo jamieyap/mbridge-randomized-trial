@@ -8,19 +8,19 @@ path_staged_data <- Sys.getenv("path_staged_data")
 # Read in raw paradata files
 ###############################################################################
 
-dat_paradata_sm1 <- read_xlsx(path = file.path(path_input_data, "SM Paradata_2.26.21.xlsx"), 
+dat_paradata_sm1 <- read_xlsx(path = file.path(path_input_data, "SM Paradata_updated7.1.21.xlsx"), 
                               sheet = "SM1", na = "N/A", 
                               col_types = c("text", "numeric", "text", "text", "text", "date", "text", "text", "date", "date"))
 
-dat_paradata_sm2 <- read_xlsx(path = file.path(path_input_data, "SM Paradata_2.26.21.xlsx"), 
+dat_paradata_sm2 <- read_xlsx(path = file.path(path_input_data, "SM Paradata_updated7.1.21.xlsx"), 
                               sheet = "SM2", na = "N/A", 
-                              col_types = c("text", "numeric", "text", "text", "text", "date", "date", "text", "date", "date"))
+                              col_types = c("text", "numeric", "text", "text", "text", "date", "date", "text", "date", "date", "text"))
 
-dat_paradata_sm3 <- read_xlsx(path = file.path(path_input_data, "SM Paradata_2.26.21.xlsx"), 
+dat_paradata_sm3 <- read_xlsx(path = file.path(path_input_data, "SM Paradata_updated7.1.21.xlsx"), 
                               sheet = "SM3", na = "N/A", 
                               col_types = c("text", "numeric", "text", "text", "text", "date", "text", "text", "date", "date"))
 
-dat_paradata_sm4 <- read_xlsx(path = file.path(path_input_data, "SM Paradata_2.26.21.xlsx"), 
+dat_paradata_sm4 <- read_xlsx(path = file.path(path_input_data, "SM Paradata_updated7.1.21.xlsx"), 
                               sheet = "SM4", na = "N/A", 
                               col_types = c("text", "numeric", "text", "text", "text", "date", "text", "text", "date", "date"))
 
