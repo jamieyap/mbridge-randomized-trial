@@ -1,0 +1,70 @@
+---
+title: "Results"
+author: |
+    |
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+geometry: margin=1in
+output: 
+  pdf_document:
+    number_sections: TRUE
+---
+
+```{r, echo = FALSE, message = FALSE}
+library(dplyr)
+library(readxl)
+
+path_input_data <- Sys.getenv("path_input_data")
+path_staged_data <- Sys.getenv("path_staged_data")
+
+source(file.path("run-analysis-exploratory.R"))
+```
+
+```{r}
+print(dat_summary)
+```
+
+# Outcome: Y=1 if classified as non-responder by 1st decision point; Y=0 otherwise
+
+```{r}
+summary(mod_flagged_by_01a)
+```
+
+```{r}
+summary(mod_flagged_by_01b)
+```
+
+# Outcome: Y=1 if classified as non-responder by 2nd decision point (i.e., classified as non-responder at either 1st or 2nd decision point); Y=0 otherwise
+
+```{r}
+summary(mod_flagged_by_02a)
+```
+
+```{r}
+summary(mod_flagged_by_02b)
+```
+
+
+# Outcome: Y=1 if classified as non-responder by 3rd decision point (i.e., classified as non-responder at either 1st, 2nd, or 3rd decision point); Y=0 otherwise
+
+```{r}
+summary(mod_flagged_by_03a)
+```
+
+```{r}
+summary(mod_flagged_by_03b)
+```
+
+
+# Outcome: Y=1 if classified as non-responder by 4th decision point (i.e., classified as non-responder at either 1st, 2nd, 3rd, or 4th decision point); Y=0 otherwise (i.e., never classified as non-responder throughout the study)
+
+```{r}
+summary(mod_flagged_by_04a)
+```
+
+```{r}
+summary(mod_flagged_by_04b)
+```
+
+
+
+
