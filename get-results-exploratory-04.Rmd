@@ -16,12 +16,37 @@ library(readxl)
 path_input_data <- Sys.getenv("path_input_data")
 path_staged_data <- Sys.getenv("path_staged_data")
 
-source(file.path("run-analysis-exploratory.R"))
+source(file.path("run-analysis-exploratory-04.R"))
+```
+
+# Summary Statistics
+
+```{r}
+print(dat_summary_N)
+```
+
+
+```{r}
+print(dat_summary_p)
+```
+
+
+```{r}
+print(table01)
 ```
 
 ```{r}
-print(dat_summary)
+print(table02)
 ```
+
+```{r}
+print(table03)
+```
+
+```{r}
+print(table04)
+```
+
 
 # Outcome: Y=1 if classified as non-responder by 1st decision point; Y=0 otherwise
 

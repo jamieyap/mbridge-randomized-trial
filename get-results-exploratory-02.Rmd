@@ -16,10 +16,10 @@ library(readxl)
 path_input_data <- Sys.getenv("path_input_data")
 path_staged_data <- Sys.getenv("path_staged_data")
 
-source(file.path("run-analysis-main.R"))
+source(file.path("run-analysis-exploratory-02.R"))
 ```
 
-Treatment indicator was coded as '1' for 'Product' and '0' for 'Charity'.
+Treatment indicator was coded as '1' for 'Product' and '0' for 'Charity'. Only participants who were never non-responders were included in analyses.
 
 ```{r}
 print(dat_results_H1)

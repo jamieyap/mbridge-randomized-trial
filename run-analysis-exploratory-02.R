@@ -15,7 +15,7 @@ dat_analysis <- as.data.frame(dat_analysis)
 these_vars <- c("tot_days_with_any_drinks", "typical_num_drinks_per_day",
                 "is_female", "is_male", "is_white",
                 "baseline_anxiety", "baseline_depression", "baseline_stress",
-                "days_elapsed_since_entering")
+                "days_elapsed_since_entering", "sm_flagged")
 
 dat_analysis <- dat_analysis %>% 
   filter(exclude_from_all == 0) %>% 
@@ -27,6 +27,10 @@ dat_analysis <- dat_analysis %>%
          randassign_invite, coinflip, Y_delta47,
          hrs_elapsed_invite_to_first_reminder, ALCdrink,
          all_of(these_vars))
+
+dat_analysis <- dat_analysis %>%
+  mutate(is_never_flagged = if_else(is.na(sm_flagged), 1, 0)) %>%
+  filter(is_never_flagged==1)
 
 ###############################################################################
 # Estimate treatment effects: Hypothesis 1

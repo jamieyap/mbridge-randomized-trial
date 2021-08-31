@@ -38,11 +38,15 @@ dat_analysis <- dat_analysis %>%
          is_flagged_04 = if_else(!is.na(sm_flagged) & sm_flagged=="SM 4", 1, 0)) %>%
   mutate(is_flagged_by_02 = if_else(is_flagged_01==1 | is_flagged_02==1, 1, 0),
          is_flagged_by_03 = if_else(is_flagged_01==1 | is_flagged_02==1 | is_flagged_03==1, 1, 0),
-         is_flagged_by_04 = if_else(is_flagged_01==1 | is_flagged_02==1 | is_flagged_03==1 | is_flagged_04==1, 1, 0))
+         is_flagged_by_04 = if_else(is_flagged_01==1 | is_flagged_02==1 | is_flagged_03==1 | is_flagged_04==1, 1, 0)) %>%
+  mutate(is_flagged_early = is_flagged_by_02,
+         is_flagged_late = if_else(is_flagged_03==1 | is_flagged_04==1, 1, 0))
 
 dat_new <- dat_analysis %>%
   group_by(participant_id) %>%
   summarise(is_never_flagged = unique(is_never_flagged),
+            is_flagged_early = unique(is_flagged_early),
+            is_flagged_late = unique(is_flagged_late),
             is_flagged_by_01 = unique(is_flagged_01),
             is_flagged_by_02 = unique(is_flagged_by_02),
             is_flagged_by_03 = unique(is_flagged_by_03),
@@ -66,17 +70,47 @@ dat_new <- dat_new %>%
 ###############################################################################
 # Summary statistics
 ###############################################################################
-dat_summary <- dat_new %>%
-  summarise(n1 = sum(is_flagged_by_01),
-            n2 = sum(is_flagged_by_02),
-            n3 = sum(is_flagged_by_03),
-            n4 = sum(is_flagged_by_04),
-            n_never = sum(is_never_flagged),
-            p1 = sum(is_flagged_by_01)/n(),
-            p2 = sum(is_flagged_by_02)/n(),
-            p3 = sum(is_flagged_by_03)/n(),
-            p4 = sum(is_flagged_by_04)/n(),
-            p_never = sum(is_never_flagged)/n())
+dat_summary_N <- dat_new %>%
+  summarise(N_flagged_by_01 = sum(is_flagged_by_01),
+            N_flagged_by_02 = sum(is_flagged_by_02),
+            N_flagged_by_03 = sum(is_flagged_by_03),
+            N_flagged_by_04 = sum(is_flagged_by_04),
+            N_never_flag = sum(is_never_flagged))
+
+dat_summary_p <- dat_new %>%
+  summarise(p_flagged_by_01 = sum(is_flagged_by_01)/n(),
+            p_flagged_by_02 = sum(is_flagged_by_02)/n(),
+            p_flagged_by_03 = sum(is_flagged_by_03)/n(),
+            p_flagged_by_04 = sum(is_flagged_by_04)/n(),
+            p_never_flag = sum(is_never_flagged)/n())
+
+###############################################################################
+# Summary statistics
+###############################################################################
+
+table01 <- dat_new %>%
+  group_by(is_flagged_by_01) %>%
+  summarise(prop_male = mean(is_male),
+            prop_white = mean(is_white),
+            average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
+
+table02 <- dat_new %>%
+  group_by(is_flagged_by_02) %>%
+  summarise(prop_male = mean(is_male),
+            prop_white = mean(is_white),
+            average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
+
+table03 <- dat_new %>%
+  group_by(is_flagged_by_03) %>%
+  summarise(prop_male = mean(is_male),
+            prop_white = mean(is_white),
+            average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
+
+table04 <- dat_new %>%
+  group_by(is_flagged_by_04) %>%
+  summarise(prop_male = mean(is_male),
+            prop_white = mean(is_white),
+            average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 
 
 ###############################################################################

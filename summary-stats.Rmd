@@ -46,6 +46,16 @@ dat_rand_probs_invite <- dat_rand_probs_invite %>%
   mutate(prob_charity = n_charity/(n_charity + n_product))
 
 ###############################################################################
+# Check hours elapsed between invite to first reminder
+###############################################################################
+
+dat_hrs_elapsed <- dat_analysis %>%
+  filter(coinflip==1) %>%
+  group_by(decision_point) %>%
+  summarise(minimum_hrs_elapsed = min(hrs_elapsed_invite_to_first_reminder, na.rm=TRUE),
+            maximum_hrs_elapsed = max(hrs_elapsed_invite_to_first_reminder, na.rm=TRUE))
+
+###############################################################################
 # Check empirical prob of survey completion
 ###############################################################################
 
@@ -68,6 +78,11 @@ print(dat_include)
 
 ```{r}
 print(dat_rand_probs_invite)
+```
+
+
+```{r}
+print(dat_hrs_elapsed)
 ```
 
 
