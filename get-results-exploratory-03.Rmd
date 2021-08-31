@@ -19,8 +19,6 @@ path_staged_data <- Sys.getenv("path_staged_data")
 source(file.path("run-analysis-exploratory-03.R"))
 ```
 
-Treatment indicator was coded as '1' for 'Product' and '0' for 'Charity'.
-
 ```{r}
 print(table01)
 ```

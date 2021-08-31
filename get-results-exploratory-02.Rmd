@@ -22,10 +22,5 @@ source(file.path("run-analysis-exploratory-02.R"))
 Treatment indicator was coded as '1' for 'Product' and '0' for 'Charity'. Only participants who were never non-responders were included in analyses.
 
 ```{r}
-print(dat_results_H1)
+print(dat_results_supp)
 ```
-
-```{r}
-print(dat_results_H2)
-```
-

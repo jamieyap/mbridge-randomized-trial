@@ -36,21 +36,26 @@ dat_analysis <- dat_analysis %>%
          is_flagged_02 = if_else(!is.na(sm_flagged) & sm_flagged=="SM 2", 1, 0),
          is_flagged_03 = if_else(!is.na(sm_flagged) & sm_flagged=="SM 3", 1, 0),
          is_flagged_04 = if_else(!is.na(sm_flagged) & sm_flagged=="SM 4", 1, 0)) %>%
-  mutate(is_flagged_by_02 = if_else(is_flagged_01==1 | is_flagged_02==1, 1, 0),
+  mutate(is_flagged_by_01 = is_flagged_01,
+         is_flagged_by_02 = if_else(is_flagged_01==1 | is_flagged_02==1, 1, 0),
          is_flagged_by_03 = if_else(is_flagged_01==1 | is_flagged_02==1 | is_flagged_03==1, 1, 0),
          is_flagged_by_04 = if_else(is_flagged_01==1 | is_flagged_02==1 | is_flagged_03==1 | is_flagged_04==1, 1, 0)) %>%
-  mutate(is_flagged_early = is_flagged_by_02,
-         is_flagged_late = if_else(is_flagged_03==1 | is_flagged_04==1, 1, 0))
+  mutate(is_not_flagged_by_01 = -is_flagged_by_01 + 1,
+         is_not_flagged_by_02 = -is_flagged_by_02 + 1,
+         is_not_flagged_by_03 = -is_flagged_by_03 + 1,
+         is_not_flagged_by_04 = -is_flagged_by_04 + 1)
 
 dat_new <- dat_analysis %>%
   group_by(participant_id) %>%
   summarise(is_never_flagged = unique(is_never_flagged),
-            is_flagged_early = unique(is_flagged_early),
-            is_flagged_late = unique(is_flagged_late),
-            is_flagged_by_01 = unique(is_flagged_01),
+            is_flagged_by_01 = unique(is_flagged_by_01),
             is_flagged_by_02 = unique(is_flagged_by_02),
             is_flagged_by_03 = unique(is_flagged_by_03),
             is_flagged_by_04 = unique(is_flagged_by_04),
+            is_not_flagged_by_01 = unique(is_not_flagged_by_01),
+            is_not_flagged_by_02 = unique(is_not_flagged_by_02),
+            is_not_flagged_by_03 = unique(is_not_flagged_by_03),
+            is_not_flagged_by_04 = unique(is_not_flagged_by_04),
             is_male = unique(is_male),
             is_white = unique(is_white),
             PBSSOverall = unique(PBSSOverall),
@@ -71,43 +76,43 @@ dat_new <- dat_new %>%
 # Summary statistics
 ###############################################################################
 dat_summary_N <- dat_new %>%
-  summarise(N_flagged_by_01 = sum(is_flagged_by_01),
-            N_flagged_by_02 = sum(is_flagged_by_02),
-            N_flagged_by_03 = sum(is_flagged_by_03),
-            N_flagged_by_04 = sum(is_flagged_by_04),
+  summarise(N_not_flagged_by_01 = sum(is_not_flagged_by_01),
+            N_not_flagged_by_02 = sum(is_not_flagged_by_02),
+            N_not_flagged_by_03 = sum(is_not_flagged_by_03),
+            N_not_flagged_by_04 = sum(is_not_flagged_by_04),
             N_never_flag = sum(is_never_flagged))
 
 dat_summary_p <- dat_new %>%
-  summarise(p_flagged_by_01 = sum(is_flagged_by_01)/n(),
-            p_flagged_by_02 = sum(is_flagged_by_02)/n(),
-            p_flagged_by_03 = sum(is_flagged_by_03)/n(),
-            p_flagged_by_04 = sum(is_flagged_by_04)/n(),
-            p_never_flag = sum(is_never_flagged)/n())
+  summarise(p_not_flagged_by_01 = sum(is_not_flagged_by_01)/n(),
+            p_not_flagged_by_02 = sum(is_not_flagged_by_02)/n(),
+            p_not_flagged_by_03 = sum(is_not_flagged_by_03)/n(),
+            p_not_flagged_by_04 = sum(is_not_flagged_by_04)/n(),
+            p_never_flagged = sum(is_never_flagged)/n())
 
 ###############################################################################
 # Summary statistics
 ###############################################################################
 
 table01 <- dat_new %>%
-  group_by(is_flagged_by_01) %>%
+  group_by(is_not_flagged_by_01) %>%
   summarise(prop_male = mean(is_male),
             prop_white = mean(is_white),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 
 table02 <- dat_new %>%
-  group_by(is_flagged_by_02) %>%
+  group_by(is_not_flagged_by_02) %>%
   summarise(prop_male = mean(is_male),
             prop_white = mean(is_white),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 
 table03 <- dat_new %>%
-  group_by(is_flagged_by_03) %>%
+  group_by(is_not_flagged_by_03) %>%
   summarise(prop_male = mean(is_male),
             prop_white = mean(is_white),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 
 table04 <- dat_new %>%
-  group_by(is_flagged_by_04) %>%
+  group_by(is_not_flagged_by_04) %>%
   summarise(prop_male = mean(is_male),
             prop_white = mean(is_white),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
@@ -117,39 +122,39 @@ table04 <- dat_new %>%
 # Fit models: is_flagged_by_01
 ###############################################################################
 
-mod_flagged_by_01a <- glm(is_flagged_by_01 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
+mod_not_flagged_by_01a <- glm(is_not_flagged_by_01 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_01a)
 
-mod_flagged_by_01b <- glm(is_flagged_by_01 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
+mod_not_flagged_by_01b <- glm(is_not_flagged_by_01 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_01b)
 
 ###############################################################################
 # Fit models: is_flagged_by_02
 ###############################################################################
 
-mod_flagged_by_02a <- glm(is_flagged_by_02 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
+mod_not_flagged_by_02a <- glm(is_not_flagged_by_02 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_02a)
 
-mod_flagged_by_02b <- glm(is_flagged_by_02 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
+mod_not_flagged_by_02b <- glm(is_not_flagged_by_02 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_02b)
 
 ###############################################################################
 # Fit models: is_flagged_by_03
 ###############################################################################
 
-mod_flagged_by_03a <- glm(is_flagged_by_03 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
+mod_not_flagged_by_03a <- glm(is_not_flagged_by_03 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_03a)
 
-mod_flagged_by_03b <- glm(is_flagged_by_03 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
+mod_not_flagged_by_03b <- glm(is_not_flagged_by_03 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_03b)
 
 ###############################################################################
 # Fit models: is_flagged_by_04
 ###############################################################################
 
-mod_flagged_by_04a <- glm(is_flagged_by_04 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
+mod_not_flagged_by_04a <- glm(is_not_flagged_by_04 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_04a)
 
-mod_flagged_by_04b <- glm(is_flagged_by_04 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
+mod_not_flagged_by_04b <- glm(is_not_flagged_by_04 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_04b)
 
