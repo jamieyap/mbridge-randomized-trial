@@ -1,7 +1,6 @@
 library(dplyr)
 
-path_input_data <- Sys.getenv("path_input_data")
-path_staged_data <- Sys.getenv("path_staged_data")
+source("paths.R")
 
 ###############################################################################
 # Read in raw data files

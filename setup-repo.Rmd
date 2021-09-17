@@ -1,0 +1,29 @@
+---
+title: "Setting Up the Repository"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Packages used in the project
+
+1. The collection of packages and their version numbers used for this repository are recorded in the renv.lock file. The package, renv, can facilitate installation of these packages in the machine of end-users of this repository. See renv package documentation here for more details: https://rstudio.github.io/renv/articles/renv.html
+
+# Tell R where to pull data from and where to push data to
+
+1. Create a new R file named 'paths.R' and save this file within the root directory of the repository (usually where the .Rproj file is located).
+2. Within 'paths.R', set the value of the following variables below by replacing the three dots '...' with the appropriate directory. 
+
+```{r, eval=FALSE}
+path_input_data = ".../MBridge MRT Raw Data Files"
+path_staged_data = ".../staged"
+path_output_data = ".../output"
+path_figures = ".../figures"
+```
+
+Note that 'paths.R' is included in the '.gitignore' file, preventing any user-specific directories from being displayed in the repository. Also, since 'paths.R' is included in the '.gitignore' file, a new 'paths.R' file would need to be created by each end-user of the repository.
+

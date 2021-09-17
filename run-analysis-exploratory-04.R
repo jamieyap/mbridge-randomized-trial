@@ -1,8 +1,7 @@
 library(dplyr)
 library(readxl)
 
-path_input_data <- Sys.getenv("path_input_data")
-path_staged_data <- Sys.getenv("path_staged_data")
+source("paths.R")
 
 ###############################################################################
 # Data preparation steps
@@ -71,6 +70,8 @@ dat_new <- dat_new %>%
   mutate(sPBSSOverall = scale(PBSSOverall)[,1],
          stot_days_with_any_drinks = scale(tot_days_with_any_drinks)[,1],
          stypical_num_drinks_per_day = scale(typical_num_drinks_per_day)[,1])
+
+save(dat_analysis, dat_new, file = file.path(path_staged_data, "dat_tte.RData"))
 
 ###############################################################################
 # Summary statistics

@@ -1,8 +1,7 @@
 library(dplyr)
 library(readxl)
 
-path_input_data <- Sys.getenv("path_input_data")
-path_staged_data <- Sys.getenv("path_staged_data")
+source("paths.R")
 
 ###############################################################################
 # Data preparation steps
