@@ -12,7 +12,7 @@ load(file.path(path_staged_data, "dat_analysis.RData"))
 dat_analysis <- as.data.frame(dat_analysis)
 
 these_vars <- c("tot_days_with_any_drinks", "typical_num_drinks_per_day",
-                "is_female", "is_male", "is_white",
+                "is_female", "is_male", "is_white_only",
                 "baseline_anxiety", "baseline_depression", "baseline_stress",
                 "days_elapsed_since_entering", "sm_flagged")
 
@@ -42,7 +42,7 @@ dat_analysis <- dat_analysis %>%
 list_results_supp <- binary_outcome_moderated_effect(dta = dat_analysis, 
                                                      control_var = c("tot_days_with_any_drinks", 
                                                                      "typical_num_drinks_per_day", 
-                                                                     "is_white",
+                                                                     "is_white_only",
                                                                      "is_female", 
                                                                      "is_male", 
                                                                      "days_elapsed_since_entering"),

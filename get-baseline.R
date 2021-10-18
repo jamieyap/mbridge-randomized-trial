@@ -20,7 +20,8 @@ dat_baseline <- dat_baseline %>%
   rename(participant_id = External_Data_Reference,
          baseline_charity_choice = CharityChoice,
          baseline_product_choice = ProductChoice,
-         grades_hs = DGhs_grades0)
+         grades_hs = DGhs_grades0,
+         age = DGage0)
 
 ###############################################################################
 # Gender and race variables
@@ -30,7 +31,17 @@ dat_baseline <- dat_baseline %>%
   mutate(DGgender0 = replace(DGgender0, DGgender0==4, NA_real_)) %>%
   mutate(is_female = if_else(DGgender0==1, 1, 0),
          is_male = if_else(DGgender0==0, 1, 0),
-         is_white = DGrace_white0)
+         is_white = DGrace_white0) %>%
+  mutate(is_white_only = case_when(
+    (DGrace_white0==1) & (DGrace_amerind0==0) & (DGrace_asian0==0) & (DGrace_black0==0) & (DGrace_hispanic0==0) & (DGrace_hawaiian0==0) & (DGrace_other0==0) ~ 1,
+    (DGrace_white0==1) & (DGrace_amerind0 + DGrace_asian0 + DGrace_black0 + DGrace_hispanic0 + DGrace_hawaiian0 + DGrace_other0 >= 1) ~ 0,
+    TRUE ~ 0
+  )) %>%
+  mutate(is_white_and_another = case_when(
+    (DGrace_white0==1) & (DGrace_amerind0==0) & (DGrace_asian0==0) & (DGrace_black0==0) & (DGrace_hispanic0==0) & (DGrace_hawaiian0==0) & (DGrace_other0==0) ~ 1,
+    (DGrace_white0==1) & (DGrace_amerind0 + DGrace_asian0 + DGrace_black0 + DGrace_hispanic0 + DGrace_hawaiian0 + DGrace_other0 >= 1) ~ 2,
+    TRUE ~ 0
+  ))
 
 ###############################################################################
 # Baseline alcohol use variables
@@ -76,8 +87,9 @@ dat_baseline <- dat_baseline %>%
          baseline_charity_choice, baseline_product_choice,
          baseline_anxiety, baseline_depression, baseline_stress,
          tot_days_with_any_drinks, typical_num_drinks_per_day, 
-         is_female, is_male, is_white,
-         grades_hs,
+         is_female, is_male, 
+         is_white, is_white_only, is_white_and_another,
+         grades_hs, age,
          PBSSHarmReduction, PBSSLimitStop, PBSSManner, PBSSOverall)
 
 save(dat_baseline, file = file.path(path_staged_data, "dat_baseline.RData"))

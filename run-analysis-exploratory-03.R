@@ -51,7 +51,7 @@ dat_new <- dat_analysis %>%
             is_flagged_by_03 = unique(is_flagged_by_03),
             is_flagged_by_04 = unique(is_flagged_by_04),
             is_male = unique(is_male),
-            is_white = unique(is_white),
+            is_white_only = unique(is_white_only),
             PBSSOverall = unique(PBSSOverall),
             grades_hs = unique(grades_hs),
             tot_days_with_any_drinks = unique(tot_days_with_any_drinks),
@@ -73,18 +73,18 @@ dat_new <- dat_new %>%
 table01 <- dat_new %>%
   group_by(is_flagged_early) %>%
   summarise(prop_male = mean(is_male),
-            prop_white = mean(is_white),
+            prop_white_only = mean(is_white_only),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 
 table02 <- dat_new %>%
   group_by(is_flagged_late) %>%
   summarise(prop_male = mean(is_male),
-            prop_white = mean(is_white),
+            prop_white_only = mean(is_white_only),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 
 table03 <- dat_new %>%
   group_by(is_never_flagged) %>%
   summarise(prop_male = mean(is_male),
-            prop_white = mean(is_white),
+            prop_white_only = mean(is_white_only),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 

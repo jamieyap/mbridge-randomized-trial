@@ -20,7 +20,15 @@ source(file.path("run-analysis-exploratory-01.R"))
 
 Treatment indicator was coded as '1' for 'Product' and '0' for 'Charity'.
 
+
+
 ```{r}
-print(dat_results_supp)
+print(dat_results_time_in_study)
+```
+
+
+
+```{r}
+print(dat_results_early_vs_late)
 ```
 

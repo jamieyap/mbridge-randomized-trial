@@ -56,7 +56,7 @@ dat_new <- dat_analysis %>%
             is_not_flagged_by_03 = unique(is_not_flagged_by_03),
             is_not_flagged_by_04 = unique(is_not_flagged_by_04),
             is_male = unique(is_male),
-            is_white = unique(is_white),
+            is_white_only = unique(is_white_only),
             PBSSOverall = unique(PBSSOverall),
             grades_hs = unique(grades_hs),
             tot_days_with_any_drinks = unique(tot_days_with_any_drinks),
@@ -97,25 +97,25 @@ dat_summary_p <- dat_new %>%
 table01 <- dat_new %>%
   group_by(is_not_flagged_by_01) %>%
   summarise(prop_male = mean(is_male),
-            prop_white = mean(is_white),
+            prop_white = mean(is_white_only),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 
 table02 <- dat_new %>%
   group_by(is_not_flagged_by_02) %>%
   summarise(prop_male = mean(is_male),
-            prop_white = mean(is_white),
+            prop_white = mean(is_white_only),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 
 table03 <- dat_new %>%
   group_by(is_not_flagged_by_03) %>%
   summarise(prop_male = mean(is_male),
-            prop_white = mean(is_white),
+            prop_white = mean(is_white_only),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 
 table04 <- dat_new %>%
   group_by(is_not_flagged_by_04) %>%
   summarise(prop_male = mean(is_male),
-            prop_white = mean(is_white),
+            prop_white = mean(is_white_only),
             average_PBSSOverall = mean(PBSSOverall, na.rm=TRUE))
 
 
@@ -123,39 +123,39 @@ table04 <- dat_new %>%
 # Fit models: is_flagged_by_01
 ###############################################################################
 
-mod_not_flagged_by_01a <- glm(is_not_flagged_by_01 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
+mod_not_flagged_by_01a <- glm(is_not_flagged_by_01 ~ is_white_only + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_01a)
 
-mod_not_flagged_by_01b <- glm(is_not_flagged_by_01 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
+mod_not_flagged_by_01b <- glm(is_not_flagged_by_01 ~ is_white_only + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_01b)
 
 ###############################################################################
 # Fit models: is_flagged_by_02
 ###############################################################################
 
-mod_not_flagged_by_02a <- glm(is_not_flagged_by_02 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
+mod_not_flagged_by_02a <- glm(is_not_flagged_by_02 ~ is_white_only + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_02a)
 
-mod_not_flagged_by_02b <- glm(is_not_flagged_by_02 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
+mod_not_flagged_by_02b <- glm(is_not_flagged_by_02 ~ is_white_only + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_02b)
 
 ###############################################################################
 # Fit models: is_flagged_by_03
 ###############################################################################
 
-mod_not_flagged_by_03a <- glm(is_not_flagged_by_03 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
+mod_not_flagged_by_03a <- glm(is_not_flagged_by_03 ~ is_white_only + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_03a)
 
-mod_not_flagged_by_03b <- glm(is_not_flagged_by_03 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
+mod_not_flagged_by_03b <- glm(is_not_flagged_by_03 ~ is_white_only + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_03b)
 
 ###############################################################################
 # Fit models: is_flagged_by_04
 ###############################################################################
 
-mod_not_flagged_by_04a <- glm(is_not_flagged_by_04 ~ is_white + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
+mod_not_flagged_by_04a <- glm(is_not_flagged_by_04 ~ is_white_only + is_male + sPBSSOverall + stot_days_with_any_drinks, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_04a)
 
-mod_not_flagged_by_04b <- glm(is_not_flagged_by_04 ~ is_white + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
+mod_not_flagged_by_04b <- glm(is_not_flagged_by_04 ~ is_white_only + is_male + sPBSSOverall + stypical_num_drinks_per_day, data = dat_new, family = "binomial")
 #summary(mod_flagged_by_04b)
 

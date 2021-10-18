@@ -66,7 +66,7 @@ and_these_cols <- c("ALCdrink")
 dat_survey_sm1 <- dat_survey_sm1 %>% 
   mutate(decision_point = 1) %>%
   select("participant_id", "decision_point", 
-         "begintime_hrts", "endtime_hrts", 
+         "begintime_hrts", "endtime_hrts", "Finished",
          "SMdrawing_SM1_Prod", "SMdrawing_SM1_Char",
          all_of(paste(and_these_cols, "_SM1", sep=""))) %>%
   rename(SMdrawing_Prod = SMdrawing_SM1_Prod,
@@ -77,7 +77,7 @@ colnames(dat_survey_sm1) <- unlist(strsplit(colnames(dat_survey_sm1), "_SM1"))
 dat_survey_sm2 <- dat_survey_sm2 %>% 
   mutate(decision_point = 2) %>%
   select("participant_id", "decision_point", 
-         "begintime_hrts", "endtime_hrts", 
+         "begintime_hrts", "endtime_hrts", "Finished", 
          "SMdrawing_SM2_Prod", "SMdrawing_SM2_Char",
          all_of(paste(and_these_cols, "_SM2", sep=""))) %>%
   rename(SMdrawing_Prod = SMdrawing_SM2_Prod,
@@ -88,7 +88,7 @@ colnames(dat_survey_sm2) <- unlist(strsplit(colnames(dat_survey_sm2), "_SM2"))
 dat_survey_sm3 <- dat_survey_sm3 %>% 
   mutate(decision_point = 3) %>%
   select("participant_id", "decision_point", 
-         "begintime_hrts", "endtime_hrts", 
+         "begintime_hrts", "endtime_hrts", "Finished", 
          "SMdrawing_SM3_Prod", "SMdrawing_SM3_Char",
          all_of(paste(and_these_cols, "_SM3", sep=""))) %>%
   rename(SMdrawing_Prod = SMdrawing_SM3_Prod,
@@ -99,7 +99,7 @@ colnames(dat_survey_sm3) <- unlist(strsplit(colnames(dat_survey_sm3), "_SM3"))
 dat_survey_sm4 <- dat_survey_sm4 %>% 
   mutate(decision_point = 4) %>%
   select("participant_id", "decision_point", 
-         "begintime_hrts", "endtime_hrts", 
+         "begintime_hrts", "endtime_hrts", "Finished", 
          "SMdrawing_SM4_Prod", "SMdrawing_SM4_Char",
          all_of(paste(and_these_cols, "_SM4", sep=""))) %>%
   rename(SMdrawing_Prod = SMdrawing_SM4_Prod,
