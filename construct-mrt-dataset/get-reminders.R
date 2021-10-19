@@ -32,7 +32,7 @@ dat_paradata_sm1 <- dat_paradata_sm1 %>%
   mutate(Date = as.character(Date),
          Time = as.character(Time)) %>%
   mutate(randtime_hrts = paste(Date, Time, sep=" ")) %>%
-  mutate(randtime_hrts = strptime(x = randtime_hrts, format = "%Y-%m-%d %I:%M%p", tz = "UTC"))
+  mutate(randtime_hrts = strptime(x = randtime_hrts, format = "%Y-%m-%d %I:%M%p", tz = "US/Eastern"))
 
 dat_paradata_sm2 <- dat_paradata_sm2 %>%
   rename(participant_id = Pin) %>%
@@ -40,21 +40,21 @@ dat_paradata_sm2 <- dat_paradata_sm2 %>%
          Time = as.character(Time)) %>%
   mutate(Time = substring(text = Time, first = 12)) %>%
   mutate(randtime_hrts = paste(Date, Time, sep=" ")) %>%
-  mutate(randtime_hrts = strptime(x = randtime_hrts, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))
+  mutate(randtime_hrts = strptime(x = randtime_hrts, format = "%Y-%m-%d %H:%M:%S", tz = "US/Eastern"))
 
 dat_paradata_sm3 <- dat_paradata_sm3 %>%
   rename(participant_id = Pin) %>%
   mutate(Date = as.character(Date),
          Time = as.character(Time)) %>%
   mutate(randtime_hrts = paste(Date, Time, sep=" ")) %>%
-  mutate(randtime_hrts = strptime(x = randtime_hrts, format = "%Y-%m-%d %I:%M%p", tz = "UTC"))
+  mutate(randtime_hrts = strptime(x = randtime_hrts, format = "%Y-%m-%d %I:%M%p", tz = "US/Eastern"))
 
 dat_paradata_sm4 <- dat_paradata_sm4 %>%
   rename(participant_id = Pin) %>%
   mutate(Date = as.character(Date),
          Time = as.character(Time)) %>%
   mutate(randtime_hrts = paste(Date, Time, sep=" ")) %>%
-  mutate(randtime_hrts = strptime(x = randtime_hrts, format = "%Y-%m-%d %I:%M%p", tz = "UTC"))
+  mutate(randtime_hrts = strptime(x = randtime_hrts, format = "%Y-%m-%d %I:%M%p", tz = "US/Eastern"))
 
 ###############################################################################
 # Grab randomization assignment for reminders, if any exist

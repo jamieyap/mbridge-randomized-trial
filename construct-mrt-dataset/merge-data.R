@@ -1,5 +1,6 @@
 library(dplyr)
 library(readxl)
+library(lubridate)
 
 source("paths.R")
 
@@ -28,6 +29,9 @@ dat_baseline <- dat_baseline %>%
 
 ###############################################################################
 # Re-code 'No Charity' or 'No Product' as 'none'
+# Re-code different variations of product (e.g., 'Product 1', 'Product 2')
+# and different variations of charity (e.g., 'Charity 1', 'Charity 2')
+# as 'Product' and 'Charity', respectively.
 ###############################################################################
 
 use_dat_invite <- dat_invite %>% 
@@ -88,8 +92,8 @@ if(FALSE){
 }
 
 ###############################################################################
-# Construct a new variable, 'exclude_from_all', an indicator for whether
-# a participant will be dropped from all analysis
+# A participant will be excluded from all analyses if they
+# did not select their preferred product and/or charity at baseline
 ###############################################################################
 
 dat_masterlist <- dat_masterlist %>%
@@ -106,30 +110,111 @@ dat_masterlist <- dat_masterlist %>%
   arrange(desc(exclude_from_all), sm_flagged, participant_id)
 
 ###############################################################################
-# Work with time variables: transform human-readable format time variables to
-# UNIX time format
+# Construct an indicator to tell whether an individual does not have any
+# missing data in any of the baseline variables indicated below
 ###############################################################################
 
-dat_masterlist <- dat_masterlist %>%
-  mutate(when_entered_unixts = as.numeric(when_entered_hrts),
-         randtime_invite_unixts = as.numeric(randtime_invite_hrts),
-         begintime_unixts = as.numeric(begintime_hrts),
-         endtime_unixts = as.numeric(endtime_hrts),
-         randtime_first_reminder_unixts = as.numeric(randtime_first_reminder_hrts)) 
+# Variables for the primary analysis
+check_these_vars <- c("tot_days_with_any_drinks", 
+                      "typical_num_drinks_per_day",
+                      "is_female", 
+                      "is_male", 
+                      "is_white_only")
 
-###############################################################################
-# Sanity checks
-###############################################################################
+reported_these_vars <- dat_masterlist %>% 
+  select(all_of(check_these_vars)) %>%
+  complete.cases(.)
+
+dat_masterlist[["did_not_report_primary_analysis_vars"]] <- -1 * (-1 + 1*reported_these_vars)
+
+# Variables for the secondary analysis
+check_these_vars <- c("tot_days_with_any_drinks", 
+                      "typical_num_drinks_per_day",
+                      "is_female", 
+                      "is_male", 
+                      "is_white_only",
+                      "baseline_anxiety", 
+                      "baseline_depression", 
+                      "baseline_stress")
+
+reported_these_vars <- dat_masterlist %>% 
+  select(all_of(check_these_vars)) %>%
+  complete.cases(.)
+
+dat_masterlist[["did_not_report_secondary_analysis_vars"]] <- -1 * (-1 + 1*reported_these_vars)
 
 if(FALSE){
+  # Count the number of individuals who will be excluded from primary analysis
   dat_masterlist %>%
-    mutate(compare = randtime_invite_unixts > randtime_first_reminder_unixts) %>%
-    # output must be equal to zero if no issue
-    summarise(sum(compare, na.rm=TRUE))
+    filter(decision_point==1) %>%
+    select(participant_id, exclude_from_all, did_not_report_primary_analysis_vars) %>%
+    group_by(exclude_from_all, did_not_report_primary_analysis_vars) %>%
+    summarise(count = n(), .groups = "keep")
+}
+
+if(FALSE){
+  # Count the number of individuals who will be excluded from secondary analysis
+  dat_masterlist %>%
+    filter(decision_point==1) %>%
+    select(participant_id, exclude_from_all, did_not_report_secondary_analysis_vars) %>%
+    group_by(exclude_from_all, did_not_report_secondary_analysis_vars) %>%
+    summarise(count = n(), .groups = "keep")
 }
 
 ###############################################################################
-# Construct lagged time variables and calculate hours elapsed between events
+# Are there instances when the participant was supposed to be randomized
+# but was not?
+###############################################################################
+
+if(FALSE){
+  # The summary statistics calculated in the following lines of code show that
+  # there are only two such cases
+  dat_masterlist %>%
+    filter(exclude_from_all==0) %>%
+    filter(coinflip==1) %>%
+    group_by(decision_point) %>%
+    summarise(count = sum(is.na(randassign_invite)))
+}
+
+dat_masterlist <- dat_masterlist %>%
+  mutate(coinflip = replace(coinflip, 
+                            (exclude_from_all==0) & 
+                              (coinflip==1) & 
+                              (is.na(randassign_invite)), 
+                            0))
+
+###############################################################################
+# Construct indicator for whether an individual did not self-monitor at the
+# current decision point k and was considered eligible for randomization at
+# the following decision point k+1
+###############################################################################
+
+dat_masterlist <- dat_masterlist %>% 
+  group_by(participant_id) %>%
+  mutate(ALCdrink_lagminusone = c(NA_real_, head(ALCdrink, n=-1))) %>%
+  mutate(is_missing_ALCdrink_lagminusone = is.na(ALCdrink_lagminusone))
+
+if(FALSE){
+  dat_masterlist %>%
+    filter(decision_point==2) %>%
+    group_by(coinflip, is_missing_ALCdrink_lagminusone) %>%
+    summarise(count = n(), .groups = "keep")
+  
+  dat_masterlist %>%
+    filter(decision_point==3) %>%
+    group_by(coinflip, is_missing_ALCdrink_lagminusone) %>%
+    summarise(count = n(), .groups = "keep")
+  
+  dat_masterlist %>%
+    filter(decision_point==4) %>%
+    group_by(coinflip, is_missing_ALCdrink_lagminusone) %>%
+    summarise(count = n(), .groups = "keep")
+}
+
+###############################################################################
+# Work with time variables: 
+# - Calculate days elapsed since entering the MRT
+# - Transform human-readable format time variables to UNIX time format
 ###############################################################################
 
 dat_masterlist <- dat_masterlist %>%
@@ -146,110 +231,33 @@ dat_masterlist <- dat_masterlist %>%
   ))
 
 dat_masterlist <- dat_masterlist %>%
-  group_by(participant_id) %>%
-  mutate(randtime_invite_unixts_lagplusone = c(tail(randtime_invite_unixts, n=-1),NA))
-
-dat_masterlist <- dat_masterlist %>%
-  mutate(hrs_elapsed_invite_to_begin_survey = (begintime_unixts - randtime_invite_unixts)/(60*60),
-         hrs_elapsed_invite_to_first_reminder = (randtime_first_reminder_unixts - randtime_invite_unixts)/(60*60),
-         hrs_elapsed_between_dp = (randtime_invite_unixts_lagplusone - randtime_invite_unixts)/(60*60),
-         hrs_to_complete_survey = (endtime_unixts - begintime_unixts)/(60*60))
-
-###############################################################################
-# Calculate summary statistics in preparation for constructing the outcome
-###############################################################################
-
-# What is the minimum and maximum hours elapsed between invite and first reminder?
-dat_masterlist %>%
-  filter(exclude_from_all==0) %>%
-  filter(coinflip==1) %>%
-  group_by(decision_point) %>%
-  summarise(minimum_hrs_elapsed = min(hrs_elapsed_invite_to_first_reminder, na.rm=TRUE),
-            maximum_hrs_elapsed = max(hrs_elapsed_invite_to_first_reminder, na.rm=TRUE))
-
-# What is the minimum and maximum number of hours elapsed between two consecutive invites?
-dat_masterlist %>%
-  filter(exclude_from_all==0) %>%
-  filter(coinflip==1) %>%
-  filter(decision_point!=4) %>%
-  group_by(decision_point) %>%
-  summarise(min_hrs_elapsed = min(hrs_elapsed_between_dp, na.rm=TRUE),
-            max_hrs_elapsed = max(hrs_elapsed_between_dp, na.rm=TRUE))
-
-# What is the minimum and maximum number of hours elapsed between invite and beginning of survey?
-dat_masterlist %>%
-  filter(exclude_from_all==0) %>%
-  filter(coinflip==1) %>%
-  group_by(decision_point) %>%
-  summarise(minimum_hrs_elapsed = min(hrs_elapsed_invite_to_begin_survey, na.rm=TRUE),
-            maximum_hrs_elapsed = max(hrs_elapsed_invite_to_begin_survey, na.rm=TRUE),
-            q50 = quantile(hrs_elapsed_invite_to_begin_survey, probs = .50, na.rm=TRUE),
-            q95 = quantile(hrs_elapsed_invite_to_begin_survey, probs = .95, na.rm=TRUE),
-            n_greater_than_two_weeks = sum(hrs_elapsed_invite_to_begin_survey > 14*24, na.rm = TRUE))
-
-# What is the minimum and maximum number of hours to complete a survey?
-dat_masterlist %>%
-  filter(exclude_from_all==0) %>%
-  filter(coinflip==1) %>%
-  group_by(decision_point) %>%
-  summarise(minimum_hrs = min(hrs_to_complete_survey, na.rm=TRUE),
-            maximum_hrs = max(hrs_to_complete_survey, na.rm=TRUE),
-            q50 = quantile(hrs_to_complete_survey, probs = .50, na.rm=TRUE),
-            q95 = quantile(hrs_to_complete_survey, probs = .95, na.rm=TRUE),
-            q98 = quantile(hrs_to_complete_survey, probs = .98, na.rm=TRUE))
+  mutate(when_entered_hrts_UTC = with_tz(when_entered_hrts, "UTC"),
+         randtime_invite_hrts_UTC = with_tz(randtime_invite_hrts, "UTC"),
+         begintime_hrts_UTC = with_tz(begintime_hrts, "UTC"),
+         endtime_hrts_UTC = with_tz(endtime_hrts, "UTC"),
+         randtime_first_reminder_hrts_UTC = with_tz(randtime_first_reminder_hrts, "UTC")) %>%
+  mutate(when_entered_unixts = as.numeric(when_entered_hrts_UTC),
+         randtime_invite_unixts = as.numeric(randtime_invite_hrts_UTC),
+         begintime_unixts = as.numeric(begintime_hrts_UTC),
+         endtime_unixts = as.numeric(endtime_hrts_UTC),
+         randtime_first_reminder_unixts = as.numeric(randtime_first_reminder_hrts_UTC)) 
 
 ###############################################################################
-# Construct an overall indicator for whether a row will be utilized to estimate
-# treatment effects
-###############################################################################
-dat_masterlist <- dat_masterlist %>% ungroup(.)
-
-# First, create an indicator for whether no missing data exist in any of the
-# variables listed in check_these_vars
-check_these_vars <- c("tot_days_with_any_drinks", "typical_num_drinks_per_day",
-                      "is_female", "is_male", "is_white",
-                      "baseline_anxiety", "baseline_depression", "baseline_stress")
-
-reported_these_vars <- dat_masterlist %>% 
-  select(all_of(check_these_vars)) %>%
-  complete.cases(.)
-
-# Add new column
-dat_masterlist$reported_these_vars <- reported_these_vars*1
-
-# Update exclude_from_all to account for additional exclusion criteria
-dat_masterlist <- dat_masterlist %>%
-  mutate(exclude_from_all = replace(exclude_from_all, reported_these_vars==0, 1))
-
-# Second, are there instances when the participant was supposed to be randomized
-# but was not?
-
-# The summary statistics calculated in the following lines of code show that
-# there are two such cases
-dat_masterlist %>%
-  filter(exclude_from_all==0) %>%
-  filter(coinflip==1) %>%
-  group_by(decision_point) %>%
-  summarise(count = sum(is.na(randassign_invite)))
-
-dat_masterlist <- dat_masterlist %>%
-  mutate(coinflip = replace(coinflip, coinflip==1 & is.na(randassign_invite), 0))
-
-###############################################################################
-# Construct the outcome variable:
-# Create indicators for whether the participant responded to the alcohol use
-# question ALCdrink within DELTA hours of the coin flip
+# Sanity checks
 ###############################################################################
 
-# From the above summary statistics, select DELTA = 47
-dat_masterlist <- dat_masterlist %>%
-  mutate(Y_delta47 = if_else(!is.na(ALCdrink), 1, 0)) %>%
-  mutate(Y_delta47 = replace(Y_delta47, hrs_elapsed_invite_to_first_reminder>47, 0))
+if(FALSE){
+  dat_masterlist %>%
+    mutate(compare = randtime_invite_unixts > randtime_first_reminder_unixts) %>%
+    # output must be equal to zero if no issue
+    summarise(count = sum(compare, na.rm=TRUE)) %>% 
+    summarise(max_count = max(count))
+}
 
 ###############################################################################
 # Save data
 ###############################################################################
 
-dat_analysis <- dat_masterlist
-save(dat_analysis, file = file.path(path_staged_data, "dat_analysis.RData"))
+dat_merged <- dat_masterlist
+save(dat_merged, file = file.path(path_staged_data, "dat_merged.RData"))
 

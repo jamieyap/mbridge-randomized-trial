@@ -28,8 +28,8 @@ dat_survey_sm4 <- dat_survey_sm4 %>% rename(participant_id = External_Data_Refer
 dat_survey_sm1 <- dat_survey_sm1 %>% 
   mutate(StartDate = as.character(StartDate),
          EndDate = as.character(EndDate)) %>%
-  mutate(StartDate = strptime(x = StartDate, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
-         EndDate = strptime(x = EndDate, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")) %>%
+  mutate(StartDate = strptime(x = StartDate, format = "%Y-%m-%d %H:%M:%S", tz = "US/Eastern"),
+         EndDate = strptime(x = EndDate, format = "%Y-%m-%d %H:%M:%S", tz = "US/Eastern")) %>%
   rename(begintime_hrts = StartDate, endtime_hrts = EndDate)
 
 colnames(dat_survey_sm2)[1] <- "StartDate"
@@ -37,15 +37,15 @@ colnames(dat_survey_sm2)[1] <- "StartDate"
 dat_survey_sm2 <- dat_survey_sm2 %>% 
   mutate(StartDate = as.character(StartDate),
          EndDate = as.character(EndDate)) %>%
-  mutate(StartDate = strptime(x = StartDate, format = "%m/%d/%Y %H:%M:%S", tz = "UTC"),
-         EndDate = strptime(x = EndDate, format = "%m/%d/%Y %H:%M:%S", tz = "UTC")) %>%
+  mutate(StartDate = strptime(x = StartDate, format = "%m/%d/%Y %H:%M:%S", tz = "US/Eastern"),
+         EndDate = strptime(x = EndDate, format = "%m/%d/%Y %H:%M:%S", tz = "US/Eastern")) %>%
   rename(begintime_hrts = StartDate, endtime_hrts = EndDate)
 
 dat_survey_sm3 <- dat_survey_sm3 %>% 
   mutate(StartDate = as.character(StartDate),
          EndDate = as.character(EndDate)) %>%
-  mutate(StartDate = strptime(x = StartDate, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
-         EndDate = strptime(x = EndDate, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")) %>%
+  mutate(StartDate = strptime(x = StartDate, format = "%Y-%m-%d %H:%M:%S", tz = "US/Eastern"),
+         EndDate = strptime(x = EndDate, format = "%Y-%m-%d %H:%M:%S", tz = "US/Eastern")) %>%
   rename(begintime_hrts = StartDate, endtime_hrts = EndDate)
 
 colnames(dat_survey_sm4)[1] <- "StartDate"
@@ -53,8 +53,8 @@ colnames(dat_survey_sm4)[1] <- "StartDate"
 dat_survey_sm4 <- dat_survey_sm4 %>% 
   mutate(StartDate = as.character(StartDate),
          EndDate = as.character(EndDate)) %>%
-  mutate(StartDate = strptime(x = StartDate, format = "%m/%d/%Y %H:%M:%S", tz = "UTC"),
-         EndDate = strptime(x = EndDate, format = "%m/%d/%Y %H:%M:%S", tz = "UTC")) %>%
+  mutate(StartDate = strptime(x = StartDate, format = "%m/%d/%Y %H:%M:%S", tz = "US/Eastern"),
+         EndDate = strptime(x = EndDate, format = "%m/%d/%Y %H:%M:%S", tz = "US/Eastern")) %>%
   rename(begintime_hrts = StartDate, endtime_hrts = EndDate)
 
 ###############################################################################

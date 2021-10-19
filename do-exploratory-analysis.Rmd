@@ -1,0 +1,137 @@
+---
+title: "Exploratory Analysis"
+author: |
+    |
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+geometry: margin=0.50in
+classoption: landscape
+output: 
+  pdf_document:
+    number_sections: TRUE
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width = 120)
+```
+
+
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(dplyr)
+library(readxl)
+library(lubridate)
+
+source("paths.R")
+source("estimator.R")
+```
+
+
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+load(file.path(path_staged_data, "dat_analysis.RData"))
+
+# This step might appear unnecessary, but is needed since
+# dat_analysis is both a tibble and a data frame
+# but code in estimator.R does not work with tibbles
+# The call to as.data.frame() has the effect of making
+# dat_analysis of class data frame but not of class tibble
+dat_analysis <- as.data.frame(dat_analysis)
+```
+
+
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# From here onward, do not use participants having did_not_report_primary_analysis_vars == 0
+dat_analysis <- dat_analysis %>% 
+  filter(did_not_report_primary_analysis_vars == 0)
+
+# The software expects that intervention assignment is coded as numeric, 
+# and not character type
+dat_analysis <- dat_analysis %>% 
+  filter(exclude_from_all == 0) %>% 
+  mutate(randassign_invite = case_when(
+    randassign_invite == "Product" ~ 1,
+    randassign_invite == "Charity" ~ 0,
+    TRUE ~ NA_real_))
+```
+
+
+How many participant-decision points will be used to estimate the causal effect?
+
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+tab <- dat_analysis %>%
+    filter(coinflip==1) %>%
+    group_by(decision_point) %>%
+    summarise(count_randomized = n(),
+              proportion_responded_within47hours = mean(Y_delta47),
+              proportion_randomized_to_product = mean(1*(randassign_invite==1)))
+```
+
+
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+print(tab)
+```
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+list_results <- binary_outcome_moderated_effect(dta = dat_analysis, 
+                                                control_var = c("tot_days_with_any_drinks", 
+                                                                "typical_num_drinks_per_day", 
+                                                                "is_white_only",
+                                                                "is_female", 
+                                                                "is_male"),
+                                                moderator = c("days_elapsed_since_entering"),
+                                                id_var = "participant_id",
+                                                day_var = "decision_point",
+                                                trt_var = "randassign_invite",
+                                                outcome_var = "Y_delta47",
+                                                avail_var = "coinflip",
+                                                prob_treatment = 1/2,
+                                                significance_level = 0.05)
+
+
+significance_level <- 0.05
+p <- list_results[["dims"]]$p
+q <- list_results[["dims"]]$q
+n <- list_results[["sample_size"]]
+all_estimates <- c(list_results[["alpha_hat"]], list_results[["beta_hat"]])
+all_std_err <- c(list_results[["alpha_se_ssa"]], list_results[["beta_se_ssa"]])
+test_stat <- all_estimates / all_std_err
+critical_value <- qt(1 - significance_level/2, df = n - p - q) # two-sided
+p_val <- lapply(test_stat, function(x){
+  out <- 2 * pt(abs(x), df = n - p - q, lower.tail = FALSE) # two-sided
+  return(out)
+})
+p_val <- do.call(rbind, p_val)
+
+dat_results <- data.frame(exp_estimate = exp(all_estimates),
+                          estimate = all_estimates,
+                          std_err = all_std_err,
+                          p = p_val,
+                          LB95 = all_estimates - critical_value*all_std_err,
+                          UB95 = all_estimates + critical_value*all_std_err)
+
+dat_results <- round(dat_results, digits = 3)
+row.names(dat_results) <- c("Intercept", 
+                            "No. of Days with any drinks", 
+                            "No. of Drinks per day", 
+                            "White (1=Yes, 0=otherwise)", 
+                            "Female (1=Yes, 0=otherwise)",
+                            "Male (1=Yes, 0=otherwise)",
+                            "beta0",
+                            "beta1 (Trt x Days since)")
+
+```
+
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+print(dat_results)
+```
+
+
