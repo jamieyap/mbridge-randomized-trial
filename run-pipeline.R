@@ -39,5 +39,3 @@ rm(list = ls())
 rmarkdown::render("do-main-analysis.Rmd")
 rm(list = ls())
 
-rmarkdown::render("do-exploratory-analysis.Rmd")
-rm(list = ls())

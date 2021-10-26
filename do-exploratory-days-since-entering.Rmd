@@ -3,8 +3,8 @@ title: "Exploratory Analysis"
 author: |
     |
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
-geometry: margin=0.50in
-classoption: landscape
+geometry: margin=1in
+classoption: portrait
 output: 
   pdf_document:
     number_sections: TRUE
@@ -17,8 +17,8 @@ options(width = 120)
 ```
 
 
-
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(kableExtra)
 library(dplyr)
 library(readxl)
 library(lubridate)
@@ -26,6 +26,7 @@ library(lubridate)
 source("paths.R")
 source("estimator.R")
 ```
+
 
 
 
@@ -40,13 +41,7 @@ load(file.path(path_staged_data, "dat_analysis.RData"))
 dat_analysis <- as.data.frame(dat_analysis)
 ```
 
-
-
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
-# From here onward, do not use participants having did_not_report_primary_analysis_vars == 0
-dat_analysis <- dat_analysis %>% 
-  filter(did_not_report_primary_analysis_vars == 0)
-
 # The software expects that intervention assignment is coded as numeric, 
 # and not character type
 dat_analysis <- dat_analysis %>% 
@@ -57,29 +52,41 @@ dat_analysis <- dat_analysis %>%
     TRUE ~ NA_real_))
 ```
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Data preparation steps for primary analysis
+these_vars <- c("tot_days_with_any_drinks", 
+                "typical_num_drinks_per_day",
+                "is_female", 
+                "is_male", 
+                "is_white_only",
+                "days_elapsed_since_entering")
 
-How many participant-decision points will be used to estimate the causal effect?
-
-
-```{r, echo = FALSE, warning=FALSE, message = FALSE}
-tab <- dat_analysis %>%
-    filter(coinflip==1) %>%
-    group_by(decision_point) %>%
-    summarise(count_randomized = n(),
-              proportion_responded_within47hours = mean(Y_delta47),
-              proportion_randomized_to_product = mean(1*(randassign_invite==1)))
+dat_exploratory_analysis <- dat_analysis %>%
+  # Drop participants who had any missing data in these_vars
+  filter(did_not_report_primary_analysis_vars == 0) %>%
+  select(participant_id, 
+         decision_point, 
+         randassign_invite, 
+         coinflip, 
+         Y_delta47,
+         all_of(these_vars))
 ```
 
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# How many participants and decision points will be used to estimate the treatment effect?
+tab_summary_stats <- dat_exploratory_analysis %>%
+    filter(coinflip==1) %>%
+    group_by(decision_point) %>%
+    summarise(count_randomized = n())
 
-```{r, echo = FALSE, warning=FALSE, message = FALSE}
-print(tab)
+colnames(tab_summary_stats) <- c("Decision Point", "No. Participants Included in Analysis")
 ```
 
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-list_results <- binary_outcome_moderated_effect(dta = dat_analysis, 
+list_results <- binary_outcome_moderated_effect(dta = dat_exploratory_analysis,
                                                 control_var = c("tot_days_with_any_drinks", 
                                                                 "typical_num_drinks_per_day", 
                                                                 "is_white_only",
@@ -109,8 +116,7 @@ p_val <- lapply(test_stat, function(x){
 })
 p_val <- do.call(rbind, p_val)
 
-dat_results <- data.frame(exp_estimate = exp(all_estimates),
-                          estimate = all_estimates,
+dat_results <- data.frame(estimate = all_estimates,
                           std_err = all_std_err,
                           p = p_val,
                           LB95 = all_estimates - critical_value*all_std_err,
@@ -129,9 +135,82 @@ row.names(dat_results) <- c("Intercept",
 ```
 
 
-
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-print(dat_results)
+est_beta <- as.matrix(list_results[["beta_hat"]])
+est_covmat_beta <- list_results[["varcov_ssa"]][1:p,1:p]
+
+# Calculate contrasts on the risk ratio scale
+exp_estimates <- exp(est_beta)
+
+# Calculate 95% CI's of contrasts on the risk ratio scale
+Lmat <- data.frame(ones = rep(1,43),
+                   days = seq(0,42,1))
+Lmat <- as.matrix(Lmat)
+
+est_beta <- as.matrix(est_beta)
+U <- exp(Lmat %*% est_beta)
+U <- c(U)
+U <- diag(U)
+
+var_rr <- (U %*% Lmat) %*% est_covmat_beta %*% t(U %*% Lmat)
+stderr_rr <- sqrt(diag(var_rr))
+rrLB95 <- exp(Lmat %*% est_beta) - critical_value * stderr_rr
+rrUB95 <- exp(Lmat %*% est_beta) + critical_value * stderr_rr
+
+# Collect results into a data frame
+dat_exp_results <- data.frame(exp_estimates = diag(U),
+                              rrLB95 = rrLB95,
+                              rrUB95 = rrUB95)
+dat_exp_results <- round(dat_exp_results, digits = 3)
+colnames(dat_exp_results) <- c("est","95%CI: LB","95%CI: UB")
+row.names(dat_exp_results) <- paste("Risk Ratio at", 0:42, "Days elapsed since entering study", sep=" ")
 ```
 
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+kable(tab_summary_stats, format="latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+
+kable(dat_results, format="latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("HOLD_position")) %>% 
+  pack_rows("Control Covariates", 1, q) %>% 
+  pack_rows("Causal", q+1, q+p)
+```
+
+\newpage
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+kable(dat_exp_results, format="latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
+
+\newpage
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+par(mar = c(6, 5, 0.75, 0.75) + 0.1)  # Bottom, left, top, right
+plot(-1, 
+     type="n",
+     xlim = c(0,42),
+     ylim = c(0.5,1.50),
+     xaxt="n",
+     yaxt="n",
+     xlab = "Days elapsed since entering study",
+     ylab = "Risk Ratio", 
+     cex.lab = 1.75,
+     frame.plot = FALSE)
+axis(1, at = c(0,14,28,42), cex.axis = 1.75, lwd = 5)
+axis(2, at = seq(0.5,1.5,0.25), cex.axis = 1.75, lwd = 5)
+
+
+lines(0:42, 
+      dat_exp_results$est,
+      lty = 1, lwd = 7, col = "cornflowerblue")
+lines(0:42, 
+      dat_exp_results$`95%CI: LB`,
+      lty = 2, lwd = 7, col = "cornflowerblue")
+lines(0:42, 
+      dat_exp_results$`95%CI: UB`,
+      lty = 2, lwd = 7, col = "cornflowerblue")
+
+abline(h = 1, lty = 1, lwd = 5, col = "black")
+```

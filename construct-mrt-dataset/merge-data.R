@@ -168,7 +168,10 @@ if(FALSE){
 
 if(FALSE){
   # The summary statistics calculated in the following lines of code show that
-  # there are only two such cases
+  # there are only two such cases among those participants who selected their
+  # preferred product/charity at baseline (i.e., having exclude_from_all=1): 
+  # one participant was eligible for randomization throughout decision points
+  # 1,2,3,4 but did not have a randomization assignment at decision points 3 and 4
   dat_masterlist %>%
     filter(exclude_from_all==0) %>%
     filter(coinflip==1) %>%
@@ -177,11 +180,7 @@ if(FALSE){
 }
 
 dat_masterlist <- dat_masterlist %>%
-  mutate(coinflip = replace(coinflip, 
-                            (exclude_from_all==0) & 
-                              (coinflip==1) & 
-                              (is.na(randassign_invite)), 
-                            0))
+  mutate(coinflip = replace(coinflip, (exclude_from_all==0) & (coinflip==1) & (is.na(randassign_invite)), 0))
 
 ###############################################################################
 # Construct indicator for whether an individual did not self-monitor at the
@@ -219,6 +218,19 @@ if(FALSE){
 
 dat_masterlist <- dat_masterlist %>%
   mutate(days_elapsed_since_entering = case_when(
+    group=="Experimental Early" & decision_point==1 ~ 0,
+    group=="Experimental Early" & decision_point==2 ~ 14,
+    group=="Experimental Early" & decision_point==3 ~ 28,
+    group=="Experimental Early" & decision_point==4 ~ 42,
+    group=="Experimental Late" & decision_point==1 ~ 0,
+    group=="Experimental Late" & decision_point==2 ~ 14,
+    group=="Experimental Late" & decision_point==3 ~ 28,
+    group=="Experimental Late" & decision_point==4 ~ 42,
+    TRUE ~ NA_real_
+  ))
+
+dat_masterlist <- dat_masterlist %>%
+  mutate(days_elapsed_since_study_start = case_when(
     group=="Experimental Early" & decision_point==1 ~ 0,
     group=="Experimental Early" & decision_point==2 ~ 14,
     group=="Experimental Early" & decision_point==3 ~ 28,

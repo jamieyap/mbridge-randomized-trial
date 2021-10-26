@@ -1,10 +1,9 @@
 ---
-title: "Primary and Secondary Analysis"
+title: "Main Analysis"
 author: |
     |
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
-geometry: margin=0.5in
-classoption: landscape
+geometry: margin=1in
 output: 
   pdf_document:
     number_sections: TRUE
@@ -17,8 +16,8 @@ options(width = 120)
 ```
 
 
-
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(kableExtra)
 library(dplyr)
 library(readxl)
 library(lubridate)
@@ -28,6 +27,7 @@ source("estimator.R")
 ```
 
 
+# Main Effect Analysis
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
 load(file.path(path_staged_data, "dat_analysis.RData"))
@@ -41,85 +41,6 @@ dat_analysis <- as.data.frame(dat_analysis)
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
-table01 <- dat_analysis %>%
-    filter(exclude_from_all==0) %>%
-    filter(coinflip==1) %>%
-    group_by(decision_point) %>%
-    summarise(count_randomized = n(),
-              proportion_responded_within47hours = mean(Y_delta47),
-              proportion_randomized_to_product = mean(1*(randassign_invite=="Product")))
-```
-
-
-Among the 591 participants who were randomized to the experimental condition, exclude participants who
-
-* did not specify either their preferred product or charity at baseline 
-
-
-```{r, echo = FALSE, warning=FALSE, message = FALSE}
-print(table01)
-```
-
-\newpage
-
-# Participants and decision points used to estimate causal effect
-
-```{r, echo = FALSE, warning=FALSE, message = FALSE}
-table02 <- dat_analysis %>%
-    filter(exclude_from_all==0) %>%
-    filter(coinflip==1) %>%
-    filter(did_not_report_primary_analysis_vars==0) %>%
-    group_by(decision_point) %>%
-    summarise(count_randomized = n(),
-              proportion_responded_within47hours = mean(Y_delta47),
-              proportion_randomized_to_product = mean(1*(randassign_invite=="Product")))
-
-table03 <- dat_analysis %>%
-    filter(exclude_from_all==0) %>%
-    filter(coinflip==1) %>%
-    filter(did_not_report_secondary_analysis_vars==0) %>%
-    group_by(decision_point) %>%
-    summarise(count_randomized = n(),
-              proportion_responded_within47hours = mean(Y_delta47),
-              proportion_randomized_to_product = mean(1*(randassign_invite=="Product")))
-```
-
-
-Among the 591 participants who were randomized to the experimental condition, exclude participants who
-
-* did not specify either their preferred product or charity at baseline 
-* had a missing value in any of the variables utilized in the noise reduction model; that is, the variables:
-  - tot_days_with_any_drinks
-  - typical_num_drinks_per_day
-  - is_female
-  - is_white_only
-
-```{r, echo = FALSE, warning=FALSE, message = FALSE}
-print(table02)
-```
-
-
-Among the 591 participants who were randomized to the experimental condition, exclude participants who
-
-* did not specify either their preferred product or charity at baseline 
-* had a missing value in any of the variables utilized in the noise reduction model; that is, the variables:
-  - tot_days_with_any_drinks
-  - typical_num_drinks_per_day
-  - is_female
-  - is_white_only
-* had a missing value in any of the variables utilized in the model for the causal effect; that is, the variables:
-  - baseline_anxiety
-  - baseline_depression
-  - baseline_stress
-
-
-```{r, echo = FALSE, warning=FALSE, message = FALSE}
-print(table03)
-```
-
-
-
-```{r, echo = FALSE, warning=FALSE, message = FALSE}
 # The software expects that intervention assignment is coded as numeric, 
 # and not character type
 dat_analysis <- dat_analysis %>% 
@@ -129,13 +50,6 @@ dat_analysis <- dat_analysis %>%
     randassign_invite == "Charity" ~ 0,
     TRUE ~ NA_real_))
 ```
-
-
-\newpage
-
-# Estimate of causal effect for Hypothesis 1
-
-
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # Data preparation steps for primary analysis
@@ -158,31 +72,15 @@ dat_primary_analysis <- dat_analysis %>%
 ```
 
 
-
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-# Data preparation steps for secondary analysis
-these_vars <- c("tot_days_with_any_drinks", 
-                "typical_num_drinks_per_day",
-                "is_female", 
-                "is_male", 
-                "is_white_only",
-                "days_elapsed_since_entering",
-                "baseline_anxiety", 
-                "baseline_depression", 
-                "baseline_stress")
+# How many participants and decision points will be used to estimate the treatment effect?
+tab_summary_stats_H1 <- dat_primary_analysis %>%
+    filter(coinflip==1) %>%
+    group_by(decision_point) %>%
+    summarise(count_randomized = n())
 
-dat_secondary_analysis <- dat_analysis %>%
-  # Drop participants who had any missing data in these_vars
-  filter(did_not_report_secondary_analysis_vars == 0) %>%
-  select(participant_id, 
-         decision_point, 
-         randassign_invite, 
-         coinflip, 
-         Y_delta47,
-         all_of(these_vars))
+colnames(tab_summary_stats_H1) <- c("Decision Point", "No. Participants Included in Analysis")
 ```
-
-
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 list_results_H1 <- binary_outcome_moderated_effect(dta = dat_primary_analysis, 
@@ -216,8 +114,7 @@ p_val <- lapply(test_stat, function(x){
 })
 p_val <- do.call(rbind, p_val)
 
-dat_results_H1 <- data.frame(exp_estimate = exp(all_estimates),
-                             estimate = all_estimates,
+dat_results_H1 <- data.frame(estimate = all_estimates,
                              std_err = all_std_err,
                              p = p_val,
                              LB95 = all_estimates - critical_value*all_std_err,
@@ -231,20 +128,104 @@ row.names(dat_results_H1) <- c("Intercept",
                                "Female (1=Yes, 0=otherwise)",
                                "Male (1=Yes, 0=otherwise)",
                                "No. of Days elapsed since entering",
-                               "beta0")
+                               "beta")
+colnames(dat_results_H1) <- c("est","SE","p","95%CI: LB","95%CI: UB")
 ```
-
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-print(dat_results_H1)
+list_results <- list_results_H1
+
+# Calculate estimates on risk ratio scale
+est_beta <- list_results[["beta_hat"]]
+exp_estimates <- exp(est_beta)
+
+# Calculate 95% CI on risk ratio scale
+est_covmat_beta <- list_results[["varcov_ssa"]][1,1]
+var_rr <- (exp_estimates) %*% est_covmat_beta %*% t(exp_estimates)
+stderr_rr <- sqrt(var_rr)
+rrLB95 <- exp(est_beta) - critical_value * stderr_rr
+rrUB95 <- exp(est_beta) + critical_value * stderr_rr
+
+# Collect results into a data frame
+dat_exp_results_H1 <- data.frame(exp_estimates = exp_estimates,
+                                 rrLB95 = rrLB95,
+                                 rrUB95 = rrUB95)
+dat_exp_results_H1 <- round(dat_exp_results_H1, digits = 3)
+row.names(dat_exp_results_H1) <- c("exp(beta)")
+colnames(dat_exp_results_H1) <- c("est","95%CI: LB","95%CI: UB")
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+kable(tab_summary_stats_H1, format="latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+
+kable(dat_results_H1, format="latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("HOLD_position")) %>% 
+  pack_rows("Control Covariates", 1, q) %>% 
+  pack_rows("Causal", q+1, q+p)
+
+kable(dat_exp_results_H1, format="latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
+
+# Moderation Analysis
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+load(file.path(path_staged_data, "dat_analysis.RData"))
+
+# This step might appear unnecessary, but is needed since
+# dat_analysis is both a tibble and a data frame
+# but code in estimator.R does not work with tibbles
+# The call to as.data.frame() has the effect of making
+# dat_analysis of class data frame but not of class tibble
+dat_analysis <- as.data.frame(dat_analysis)
+```
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# The software expects that intervention assignment is coded as numeric, 
+# and not character type
+dat_analysis <- dat_analysis %>% 
+  filter(exclude_from_all == 0) %>% 
+  mutate(randassign_invite = case_when(
+    randassign_invite == "Product" ~ 1,
+    randassign_invite == "Charity" ~ 0,
+    TRUE ~ NA_real_))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Data preparation steps for secondary analysis
+these_vars <- c("tot_days_with_any_drinks", 
+                "typical_num_drinks_per_day",
+                "is_female", 
+                "is_male", 
+                "is_white_only",
+                "days_elapsed_since_entering",
+                "baseline_anxiety", 
+                "baseline_depression", 
+                "baseline_stress")
+
+dat_secondary_analysis <- dat_analysis %>%
+  # Drop participants who had any missing data in these_vars
+  filter(did_not_report_secondary_analysis_vars == 0) %>%
+  select(participant_id, 
+         decision_point, 
+         randassign_invite, 
+         coinflip, 
+         Y_delta47,
+         all_of(these_vars))
 ```
 
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# How many participants and decision points will be used to estimate the treatment effect?
+tab_summary_stats_H2 <- dat_secondary_analysis %>%
+    filter(coinflip==1) %>%
+    group_by(decision_point) %>%
+    summarise(count_randomized = n())
 
-# Estimate of causal effect for Hypothesis 2
-
-
+colnames(tab_summary_stats_H2) <- c("Decision Point", "No. Participants Randomized")
+```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 list_results_H2 <- binary_outcome_moderated_effect(dta = dat_secondary_analysis, 
@@ -280,8 +261,7 @@ p_val <- lapply(test_stat, function(x){
 })
 p_val <- do.call(rbind, p_val)
 
-dat_results_H2 <- data.frame(exp_estimate = exp(all_estimates),
-                             estimate = all_estimates,
+dat_results_H2 <- data.frame(estimate = all_estimates,
                              std_err = all_std_err,
                              p = p_val,
                              LB95 = all_estimates - critical_value*all_std_err,
@@ -300,13 +280,53 @@ row.names(dat_results_H2) <- c("Intercept",
                                "beta2 (Coefficient for treatment x baseline depression)",
                                "beta3 (Coefficient for treatment x baseline stress)")
 
+colnames(dat_results_H2) <- c("est","SE","p","95%CI: LB","95%CI: UB")
 ```
-
-
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-print(dat_results_H2)
+list_results <- list_results_H2
+
+est_beta <- as.matrix(list_results[["beta_hat"]])
+est_covmat_beta <- list_results[["varcov_ssa"]][1:p,1:p]
+
+# Calculate contrasts on the risk ratio scale
+exp_estimates <- exp(est_beta)
+
+# Calculate 95% CI's of contrasts on the risk ratio scale
+Lmat <- matrix(c(1,1,0,0,
+                 1,0,1,0,
+                 1,0,0,1), nrow=3)
+
+est_beta <- as.matrix(est_beta)
+U <- exp(Lmat %*% est_beta)
+U <- c(U)
+U <- diag(U)
+
+var_rr <- (U %*% Lmat) %*% est_covmat_beta %*% t(U %*% Lmat)
+stderr_rr <- sqrt(diag(var_rr))
+rrLB95 <- exp(Lmat %*% est_beta) - critical_value * stderr_rr
+rrUB95 <- exp(Lmat %*% est_beta) + critical_value * stderr_rr
+
+# Collect results into a data frame
+dat_exp_results_H2 <- data.frame(exp_estimates = diag(U),
+                                 rrLB95 = rrLB95,
+                                 rrUB95 = rrUB95)
+dat_exp_results_H2 <- round(dat_exp_results_H2, digits = 3)
+colnames(dat_exp_results_H2) <- c("est","95%CI: LB","95%CI: UB")
+row.names(dat_exp_results_H2) <- c("exp(beta0+beta1)","exp(beta0+beta2)","exp(beta0+beta3)")
 ```
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+kable(tab_summary_stats_H2, format="latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+
+kable(dat_results_H2, format="latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("HOLD_position")) %>% 
+  pack_rows("Control Covariates", 1, q) %>% 
+  pack_rows("Causal", q+1, q+p)
+
+kable(dat_exp_results_H2, format="latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
 
 
