@@ -228,10 +228,10 @@ kable(cnt1, format="latex", booktabs=TRUE, caption = "No. of participant-decisio
 kable(cnt2, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt3, format="latex", booktabs=TRUE, caption = "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data.") %>% 
+kable(cnt3, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt4, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized") %>% 
+kable(cnt4, format="latex", booktabs=TRUE, caption = "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data.") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 ```
 
@@ -420,10 +420,10 @@ kable(cnt1, format="latex", booktabs=TRUE, caption = "No. of participant-decisio
 kable(cnt2, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model and moderators") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt3, format="latex", booktabs=TRUE, caption = "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data.") %>% 
+kable(cnt3, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt4, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized") %>% 
+kable(cnt4, format="latex", booktabs=TRUE, caption = "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data.") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 ```
 
