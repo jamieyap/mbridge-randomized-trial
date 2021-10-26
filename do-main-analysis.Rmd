@@ -28,6 +28,7 @@ source("estimator.R")
 
 
 # Main Effect Analysis
+## Main Results
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
 load(file.path(path_staged_data, "dat_analysis.RData"))
@@ -41,6 +42,15 @@ dat_analysis <- as.data.frame(dat_analysis)
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# Count step-by-step how many participants we are excluding per decision point
+# cnt1 -- "No. of participant-decision points excluded due to the fact that participants did not select their preferred Product or Charity at baseline"
+cnt1 <- dat_analysis %>% 
+  filter(exclude_from_all == 1) %>% 
+  group_by(decision_point) %>%
+  summarise(num_participants = n(), .groups = "keep")
+```
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
 # The software expects that intervention assignment is coded as numeric, 
 # and not character type
 dat_analysis <- dat_analysis %>% 
@@ -49,6 +59,15 @@ dat_analysis <- dat_analysis %>%
     randassign_invite == "Product" ~ 1,
     randassign_invite == "Charity" ~ 0,
     TRUE ~ NA_real_))
+```
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# Count step-by-step how many participants we are excluding per decision point
+# cnt2 -- "No. of participant-decision points excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model"
+cnt2 <- dat_analysis %>% 
+  filter(did_not_report_primary_analysis_vars == 1) %>% 
+  group_by(decision_point) %>%
+  summarise(num_participants = n(), .groups = "keep")
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -68,18 +87,38 @@ dat_primary_analysis <- dat_analysis %>%
          randassign_invite, 
          coinflip, 
          Y_delta47,
-         all_of(these_vars))
+         all_of(these_vars),
+         sm_flagged, randtime_invite_hrts)
 ```
 
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# Count step-by-step how many participants we are excluding per decision point
+# cnt3 -- "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data."
+cnt3 <- dat_primary_analysis %>% 
+  filter(!(is.na(sm_flagged) & is.na(randtime_invite_hrts))) %>%
+  filter(coinflip==0) %>% 
+  group_by(decision_point) %>%
+  summarise(num_participants = n(), .groups = "keep")
+```
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# Count step-by-step how many participants we are excluding per decision point
+# cnt4 -- "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized"
+cnt4 <- dat_primary_analysis %>% 
+  filter(is.na(sm_flagged) & is.na(randtime_invite_hrts)) %>% 
+  group_by(decision_point) %>%
+  summarise(num_participants = n(), .groups = "keep")
+```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # How many participants and decision points will be used to estimate the treatment effect?
 tab_summary_stats_H1 <- dat_primary_analysis %>%
-    filter(coinflip==1) %>%
-    group_by(decision_point) %>%
-    summarise(count_randomized = n())
+  filter(coinflip==1) %>%
+  group_by(decision_point) %>%
+  summarise(count_randomized = n()) %>%
+  mutate(excluded = 591 - count_randomized)
 
-colnames(tab_summary_stats_H1) <- c("Decision Point", "No. Participants Included in Analysis")
+colnames(tab_summary_stats_H1) <- c("Decision Point", "Total No. Participants Included in Analysis",  "Total No. Participants Excluded from Analysis")
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -158,7 +197,7 @@ colnames(dat_exp_results_H1) <- c("est","95%CI: LB","95%CI: UB")
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 kable(tab_summary_stats_H1, format="latex", booktabs=TRUE) %>% 
-  kable_styling(latex_options = c("HOLD_position"))
+  kable_styling(latex_options = c("HOLD_position", "scale_down"))
 
 kable(dat_results_H1, format="latex", booktabs=TRUE) %>% 
   kable_styling(latex_options = c("HOLD_position")) %>% 
@@ -169,7 +208,37 @@ kable(dat_exp_results_H1, format="latex", booktabs=TRUE) %>%
   kable_styling(latex_options = c("HOLD_position"))
 ```
 
+
+\newpage
+
+## Appendix: Participants excluded from analyses -- breakdown by decision point and rationale
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+colnames(cnt1) <- c("Decision Point", "Number of Participants Excluded")
+colnames(cnt2) <- c("Decision Point", "Number of Participants Excluded")
+colnames(cnt3) <- c("Decision Point", "Number of Participants Excluded")
+colnames(cnt4) <- c("Decision Point", "Number of Participants Excluded")
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+kable(cnt1, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the fact that participants did not select their preferred Product or Charity at baseline") %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+
+kable(cnt2, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model") %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+
+kable(cnt3, format="latex", booktabs=TRUE, caption = "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data.") %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+
+kable(cnt4, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized") %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
+
+\newpage
+
 # Moderation Analysis
+## Main Results
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
 load(file.path(path_staged_data, "dat_analysis.RData"))
@@ -183,6 +252,15 @@ dat_analysis <- as.data.frame(dat_analysis)
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# Count step-by-step how many participants we are excluding per decision point
+# cnt1 -- "No. of participant-decision points excluded due to the fact that participants did not select their preferred Product or Charity at baseline"
+cnt1 <- dat_analysis %>% 
+  filter(exclude_from_all == 1) %>% 
+  group_by(decision_point) %>%
+  summarise(num_participants = n(), .groups = "keep")
+```
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
 # The software expects that intervention assignment is coded as numeric, 
 # and not character type
 dat_analysis <- dat_analysis %>% 
@@ -191,6 +269,16 @@ dat_analysis <- dat_analysis %>%
     randassign_invite == "Product" ~ 1,
     randassign_invite == "Charity" ~ 0,
     TRUE ~ NA_real_))
+```
+
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# Count step-by-step how many participants we are excluding per decision point
+# cnt2 -- "No. of participant-decision points excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model and moderators"
+cnt2 <- dat_analysis %>% 
+  filter(did_not_report_secondary_analysis_vars == 1) %>% 
+  group_by(decision_point) %>%
+  summarise(num_participants = n(), .groups = "keep")
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -213,18 +301,38 @@ dat_secondary_analysis <- dat_analysis %>%
          randassign_invite, 
          coinflip, 
          Y_delta47,
-         all_of(these_vars))
+         all_of(these_vars),
+         sm_flagged, randtime_invite_hrts)
 ```
 
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# Count step-by-step how many participants we are excluding per decision point
+# cnt3 -- "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data."
+cnt3 <- dat_secondary_analysis %>% 
+  filter(!(is.na(sm_flagged) & is.na(randtime_invite_hrts))) %>%
+  filter(coinflip==0) %>% 
+  group_by(decision_point) %>%
+  summarise(num_participants = n(), .groups = "keep")
+```
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# Count step-by-step how many participants we are excluding per decision point
+# cnt4 -- "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized"
+cnt4 <- dat_secondary_analysis %>% 
+  filter(is.na(sm_flagged) & is.na(randtime_invite_hrts)) %>% 
+  group_by(decision_point) %>%
+  summarise(num_participants = n(), .groups = "keep")
+```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # How many participants and decision points will be used to estimate the treatment effect?
 tab_summary_stats_H2 <- dat_secondary_analysis %>%
     filter(coinflip==1) %>%
     group_by(decision_point) %>%
-    summarise(count_randomized = n())
+    summarise(count_randomized = n()) %>%
+  mutate(excluded = 591 - count_randomized)
 
-colnames(tab_summary_stats_H2) <- c("Decision Point", "No. Participants Randomized")
+colnames(tab_summary_stats_H2) <- c("Decision Point", "Total No. Participants Included in Analysis",  "Total No. Participants Excluded from Analysis")
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
@@ -284,49 +392,38 @@ colnames(dat_results_H2) <- c("est","SE","p","95%CI: LB","95%CI: UB")
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-list_results <- list_results_H2
-
-est_beta <- as.matrix(list_results[["beta_hat"]])
-est_covmat_beta <- list_results[["varcov_ssa"]][1:p,1:p]
-
-# Calculate contrasts on the risk ratio scale
-exp_estimates <- exp(est_beta)
-
-# Calculate 95% CI's of contrasts on the risk ratio scale
-Lmat <- matrix(c(1,1,0,0,
-                 1,0,1,0,
-                 1,0,0,1), nrow=3)
-
-est_beta <- as.matrix(est_beta)
-U <- exp(Lmat %*% est_beta)
-U <- c(U)
-U <- diag(U)
-
-var_rr <- (U %*% Lmat) %*% est_covmat_beta %*% t(U %*% Lmat)
-stderr_rr <- sqrt(diag(var_rr))
-rrLB95 <- exp(Lmat %*% est_beta) - critical_value * stderr_rr
-rrUB95 <- exp(Lmat %*% est_beta) + critical_value * stderr_rr
-
-# Collect results into a data frame
-dat_exp_results_H2 <- data.frame(exp_estimates = diag(U),
-                                 rrLB95 = rrLB95,
-                                 rrUB95 = rrUB95)
-dat_exp_results_H2 <- round(dat_exp_results_H2, digits = 3)
-colnames(dat_exp_results_H2) <- c("est","95%CI: LB","95%CI: UB")
-row.names(dat_exp_results_H2) <- c("exp(beta0+beta1)","exp(beta0+beta2)","exp(beta0+beta3)")
-```
-
-```{r, echo=FALSE, warning=FALSE, message=FALSE}
 kable(tab_summary_stats_H2, format="latex", booktabs=TRUE) %>% 
-  kable_styling(latex_options = c("HOLD_position"))
+  kable_styling(latex_options = c("HOLD_position", "scale_down"))
 
 kable(dat_results_H2, format="latex", booktabs=TRUE) %>% 
   kable_styling(latex_options = c("HOLD_position")) %>% 
   pack_rows("Control Covariates", 1, q) %>% 
   pack_rows("Causal", q+1, q+p)
-
-kable(dat_exp_results_H2, format="latex", booktabs=TRUE) %>% 
-  kable_styling(latex_options = c("HOLD_position"))
 ```
 
+\newpage
+
+## Appendix: Participants excluded from analyses -- breakdown by decision point and rationale
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+colnames(cnt1) <- c("Decision Point", "Number of Participants Excluded")
+colnames(cnt2) <- c("Decision Point", "Number of Participants Excluded")
+colnames(cnt3) <- c("Decision Point", "Number of Participants Excluded")
+colnames(cnt4) <- c("Decision Point", "Number of Participants Excluded")
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+kable(cnt1, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the fact that participants did not select their preferred Product or Charity at baseline") %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+
+kable(cnt2, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model and moderators") %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+
+kable(cnt3, format="latex", booktabs=TRUE, caption = "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data.") %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+
+kable(cnt4, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized") %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
 

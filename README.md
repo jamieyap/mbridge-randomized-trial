@@ -1,1 +1,1 @@
-# mbridge-randomized-trial
+# MBridge Randomized Trial
