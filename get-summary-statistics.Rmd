@@ -1,0 +1,60 @@
+---
+title: "Summary Statistics"
+author: |
+    |
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+geometry: margin=1in
+output: 
+  pdf_document:
+    number_sections: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width = 120)
+```
+
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(kableExtra)
+library(dplyr)
+library(readxl)
+library(lubridate)
+
+source("paths.R")
+```
+
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+load(file.path(path_staged_data, "dat_analysis.RData"))
+
+# This step might appear unnecessary, but is needed since
+# dat_analysis is both a tibble and a data frame
+# but code in estimator.R does not work with tibbles
+# The call to as.data.frame() has the effect of making
+# dat_analysis of class data frame but not of class tibble
+dat_analysis <- as.data.frame(dat_analysis)
+```
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+dat_subset <- dat_analysis %>% 
+  filter(exclude_from_all == 0) %>% 
+  filter(coinflip == 1)
+```
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+tab_summary <- dat_subset %>%
+  group_by(decision_point) %>%
+  summarise(num_participants = n(),
+            tot_completed = sum(Finished, na.rm=TRUE)) %>%
+  mutate(pct_completed = (tot_completed/num_participants)*100) %>%
+  round(., 2)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+colnames(tab_summary) <- c("Decision Point", "No. Participants Randomized", "No. Compleed Self-Monitoring", "% Completed Self-Monitoring")
+
+kable(tab_summary, format="latex", booktabs=TRUE, caption = "Among participants who were randomized at each decision point, what percentage completed the self-monitoring survey? Note that we do not include participants who did not select their preferred product or charity at baseline.") %>% 
+  kable_styling(latex_options = c("HOLD_position"))
+```
+
