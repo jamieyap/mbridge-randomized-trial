@@ -437,7 +437,7 @@ kable(cnt4, format="latex", booktabs=TRUE, caption = "No of participant-decision
 kable(cnt5, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the participant not completing the survey at the previous decision point after having been invited to self-monitor") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt6, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the participant not having been invited to self-monitor at the previous decision point. These participants were also not eligible for randomization at the previous decision point. Recall that if participants were not eligible for randomization at a particular decision point, they were not sent a self-monitoring survey at that particular decision point.") %>% 
+kable(cnt6, format="latex", booktabs=TRUE, caption = "At the current decision point t, we will exclude participant-decision points belonging to participants who were not invited to self-monitor at the previous decision point t-1 (i.e., these were the participants who were classified as heavy drinkers at t-2). Note that only participants who complete self-monitoring at t-1 would have the opportunity to allocate points.") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 ```
 

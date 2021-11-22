@@ -3,7 +3,7 @@ title: "Summary Statistics"
 author: |
     |
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
-geometry: margin=1in
+geometry: margin=0.75in
 output: 
   pdf_document:
     number_sections: TRUE
@@ -36,6 +36,16 @@ load(file.path(path_staged_data, "dat_analysis.RData"))
 dat_analysis <- as.data.frame(dat_analysis)
 ```
 
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+dat_analysis <- dat_analysis %>%
+  mutate(any_alloc = 1*(!is.na(SMdrawing_Prod) & !is.na(SMdrawing_Char)),
+         is_equal_alloc = 1*(SMdrawing_Prod==1 & SMdrawing_Char==1),
+         is_all_alloc_product = 1*(SMdrawing_Prod==2 & SMdrawing_Char==0),
+         is_all_alloc_charity = 1*(SMdrawing_Prod==0 & SMdrawing_Char==2)) %>%
+  mutate(is_any_alloc_product = 1*((is_equal_alloc==1) | (is_all_alloc_product)),
+         is_any_alloc_charity = 1*((is_equal_alloc==1) | (is_all_alloc_charity)))
+```
+
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
 dat_subset <- dat_analysis %>% 
   filter(exclude_from_all == 0) %>% 
@@ -52,9 +62,38 @@ tab_summary <- dat_subset %>%
 ```
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-colnames(tab_summary) <- c("Decision Point", "No. Participants Randomized", "No. Compleed Self-Monitoring", "% Completed Self-Monitoring")
+colnames(tab_summary) <- c("Decision Point", "Total", "No. Completed Self-Monitoring", "% Completed Self-Monitoring")
 
 kable(tab_summary, format="latex", booktabs=TRUE, caption = "Among participants who were randomized at each decision point, what percentage completed the self-monitoring survey? Note that we do not include participants who did not select their preferred product or charity at baseline.") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 ```
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+tab_summary <- dat_subset %>%
+  filter(Finished==1) %>%
+  group_by(decision_point) %>%
+  summarise(num_participants = n(),
+            tot_product_only = sum(is_all_alloc_product, na.rm=TRUE),
+            tot_equal = sum(is_equal_alloc, na.rm=TRUE),
+            tot_charity_only = sum(is_all_alloc_charity, na.rm=TRUE)) %>%
+  mutate(pct_product_only = (tot_product_only/num_participants)*100,
+         pct_equal = (tot_equal/num_participants)*100,
+         pct_charity_only = (tot_charity_only/num_participants)*100) %>%
+  round(., 2)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+colnames(tab_summary) <- c("Decision Point", 
+                           "Total",
+                           "No. of Participants: Product: 2, Charity: 0", "No. of Participants: Product: 1, Charity: 1", "No. of Participants: Product: 0, Charity: 2",
+                           "% of Participants: Product: 2, Charity: 0", "% of Participants: Product: 1, Charity: 1", "% of Participants: Product: 0, Charity: 2")
+
+kable(tab_summary, format="latex", booktabs=TRUE, caption = "Among participants who completed self-monitoring at each decision point, how many (a) allocated 2 points to product and 0 points to charity, (b) allocated 1 point to product and 1 point to charity, (c) allocated 0 points to product and 2 points to charity?") %>% 
+  column_spec(3:8, width = "10em") %>%
+  kable_styling(latex_options = c("HOLD_position", "scale_down"))
+```
+
+
+
+
 
