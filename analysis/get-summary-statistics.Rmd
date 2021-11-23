@@ -3,10 +3,10 @@ title: "Summary Statistics"
 author: |
     |
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
-geometry: margin=0.75in
-output: 
+output:
   pdf_document:
-    number_sections: TRUE
+    number_sections: yes
+geometry: margin=0.75in
 ---
 
 ```{r setup, include=FALSE}
@@ -21,7 +21,7 @@ library(dplyr)
 library(readxl)
 library(lubridate)
 
-source("paths.R")
+source("../paths.R")
 ```
 
 
@@ -48,7 +48,8 @@ dat_analysis <- dat_analysis %>%
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
 dat_subset <- dat_analysis %>% 
-  filter(exclude_from_all == 0) %>% 
+  filter(exclude_from_all == 0) %>%
+  filter(did_not_report_primary_analysis_vars == 0) %>%
   filter(coinflip == 1)
 ```
 
@@ -66,6 +67,26 @@ colnames(tab_summary) <- c("Decision Point", "Total", "No. Completed Self-Monito
 
 kable(tab_summary, format="latex", booktabs=TRUE, caption = "Among participants who were randomized at each decision point, what percentage completed the self-monitoring survey? Note that we do not include participants who did not select their preferred product or charity at baseline.") %>% 
   kable_styling(latex_options = c("HOLD_position"))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+dat_analysis <- dat_analysis %>% 
+  mutate(age = case_when(
+    age == 0 ~ 18,
+    age == 1 ~ 19,
+    age == 2 ~ 20,
+    age == 3 ~ 21,
+    TRUE ~ NA_real_
+  ))
+
+tab_summary <- dat_subset %>%
+  group_by(decision_point) %>%
+  summarise(average_age = mean(age, na.rm=TRUE),
+            sd_age = sd(age, na.rm=TRUE),
+            min_age = min(age, na.rm=TRUE),
+            max_age = max(age, na.rm=TRUE),
+            prop_white = mean(is_white, na.rm=TRUE),
+            prop_female = mean(is_female, na.rm=TRUE))
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
@@ -92,6 +113,7 @@ kable(tab_summary, format="latex", booktabs=TRUE, caption = "Among participants 
   column_spec(3:8, width = "10em") %>%
   kable_styling(latex_options = c("HOLD_position", "scale_down"))
 ```
+
 
 
 

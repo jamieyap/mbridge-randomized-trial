@@ -23,8 +23,8 @@ library(dplyr)
 library(readxl)
 library(lubridate)
 
-source("paths.R")
-source("estimator.R")
+source("../paths.R")
+source("../estimator.R")
 ```
 
 # Main Results
@@ -90,8 +90,6 @@ dat_exploratory_analysis <- dat_analysis %>%
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
-# Count step-by-step how many participants we are excluding per decision point
-# cnt3 -- "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data."
 cnt3 <- dat_exploratory_analysis %>% 
   filter(!(is.na(sm_flagged) & is.na(randtime_invite_hrts))) %>% 
   filter(coinflip == 0) %>% 
@@ -100,24 +98,34 @@ cnt3 <- dat_exploratory_analysis %>%
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
-# Count step-by-step how many participants we are excluding per decision point
-# cnt4 -- "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized"
 cnt4 <- dat_exploratory_analysis %>% 
   filter(is.na(sm_flagged) & is.na(randtime_invite_hrts)) %>% 
   group_by(decision_point) %>%
   summarise(num_participants = n(), .groups = "keep")
 ```
 
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # How many participants and decision points will be used to estimate the treatment effect?
 tab_summary_stats <- dat_exploratory_analysis %>%
-    filter(coinflip==1) %>%
-    group_by(decision_point) %>%
-    summarise(count_randomized = n()) %>%
-  mutate(excluded = 591 - count_randomized)
+  group_by(decision_point) %>%
+  summarise(tot = 591)
 
-colnames(tab_summary_stats) <- c("Decision Point", "Total No. Participants Included in Analysis",  "Total No. Participants Excluded from Analysis")
+tab1 <- cnt1 %>% rename(n1 = num_participants)
+tab2 <- cnt2 %>% rename(n2 = num_participants)
+tab3 <- cnt3 %>% rename(n3 = num_participants)
+tab4 <- cnt4 %>% rename(n4 = num_participants)
+
+tab_summary_stats <- tab_summary_stats %>%
+  left_join(x = ., y = tab1, by = "decision_point") %>%
+  left_join(x = ., y = tab2, by = "decision_point") %>%
+  left_join(x = ., y = tab4, by = "decision_point") %>%
+  left_join(x = ., y = tab3, by = "decision_point") %>%
+  mutate(remain = rowSums(cbind(tot, -n1, -n2, -n3, -n4), na.rm=TRUE))
+
+colnames(tab_summary_stats) <- c("Decision Point", "Total", "n1", "n2", "n4", "n3", "remain")
 ```
+
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 list_results <- binary_outcome_moderated_effect(dta = dat_exploratory_analysis,
@@ -201,8 +209,12 @@ row.names(dat_exp_results) <- paste("Risk Ratio at", 0:42, "Days elapsed since e
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
+options(knitr.kable.NA = '-')
+colnames(tab_summary_stats) <- c("Decision Point","Total","See Section 2, Table 1", "See Section 2, Table 2", "See Section 2, Table 4", "See Section 2, Table 3", "Remaining")
 kable(tab_summary_stats, format="latex", booktabs=TRUE) %>% 
-  kable_styling(latex_options = c("HOLD_position","scale_down"))
+  add_header_above(c(" "=1, " "=1, "Excluded" = 3, "Ineligible"=1, " "=1)) %>%
+  kable_styling(latex_options = c("HOLD_position", "scale_down"))
+
 
 kable(dat_results, format="latex", booktabs=TRUE) %>% 
   kable_styling(latex_options = c("HOLD_position")) %>% 
@@ -250,7 +262,7 @@ abline(h = 1, lty = 1, lwd = 5, col = "black")
 
 \newpage
 
-# Appendix: Participants excluded from analyses -- breakdown by decision point and rationale
+# Supplemental Information for `Main Results': Participants excluded from analyses -- breakdown by decision point and rationale
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 colnames(cnt1) <- c("Decision Point", "Number of Participants Excluded")
@@ -261,23 +273,23 @@ colnames(cnt4) <- c("Decision Point", "Number of Participants Excluded")
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-kable(cnt1, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the fact that participants did not select their preferred Product or Charity at baseline") %>% 
+kable(cnt1, format="latex", booktabs=TRUE, caption = "No. of participants excluded due to the fact that participants did not select their preferred Product or Charity at baseline") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt2, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model") %>% 
+kable(cnt2, format="latex", booktabs=TRUE, caption = "No. of participants excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt3, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized") %>% 
+kable(cnt3, format="latex", booktabs=TRUE, caption = "No. of ineligible participants (i.e., who were classified as heavy drinkers at the prior self-monitoring assessment)") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt4, format="latex", booktabs=TRUE, caption = "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data.") %>% 
+kable(cnt4, format="latex", booktabs=TRUE, caption = "No. of eligible participants (i.e., who were not classified as heavy drinkers at the prior self-monitoring assessment) who did not have any randomization assignment") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 ```
 
 
 \newpage
 
-# Supplementary Results 
+# Results of Sensitivity Analysis
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
 load(file.path(path_staged_data, "dat_analysis.RData"))
@@ -340,8 +352,6 @@ dat_exploratory_analysis <- dat_analysis %>%
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
-# Count step-by-step how many participants we are excluding per decision point
-# cnt3 -- "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data."
 cnt3 <- dat_exploratory_analysis %>% 
   filter(!(is.na(sm_flagged) & is.na(randtime_invite_hrts))) %>% 
   filter(coinflip == 0) %>% 
@@ -350,8 +360,6 @@ cnt3 <- dat_exploratory_analysis %>%
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
-# Count step-by-step how many participants we are excluding per decision point
-# cnt4 -- "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized"
 cnt4 <- dat_exploratory_analysis %>% 
   filter(is.na(sm_flagged) & is.na(randtime_invite_hrts)) %>% 
   group_by(decision_point) %>%
@@ -359,8 +367,6 @@ cnt4 <- dat_exploratory_analysis %>%
 ```
 
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
-# Count step-by-step how many participants we are excluding per decision point
-# cnt5 -- drop those participants who were not eligible for randomization throughout ALL four decision points (e.g., participants who were eligible for randomization at only for the first decision point were dropped)
 cnt5 <- dat_exploratory_analysis %>% 
   filter(coinflip == 1 & !is.na(sm_flagged)) %>%
   group_by(decision_point) %>%
@@ -372,16 +378,30 @@ dat_exploratory_analysis <- dat_exploratory_analysis %>%
   mutate(coinflip = replace(coinflip, coinflip == 1 & !is.na(sm_flagged), 0))
 ```
 
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # How many participants and decision points will be used to estimate the treatment effect?
 tab_summary_stats <- dat_exploratory_analysis %>%
-    filter(coinflip==1) %>%
-    group_by(decision_point) %>%
-    summarise(count_randomized = n()) %>%
-  mutate(excluded = 591 - count_randomized)
+  group_by(decision_point) %>%
+  summarise(tot = 591)
 
-colnames(tab_summary_stats) <- c("Decision Point", "Total No. Participants Included in Analysis",  "Total No. Participants Excluded from Analysis")
+tab1 <- cnt1 %>% rename(n1 = num_participants)
+tab2 <- cnt2 %>% rename(n2 = num_participants)
+tab3 <- cnt3 %>% rename(n3 = num_participants)
+tab4 <- cnt4 %>% rename(n4 = num_participants)
+tab5 <- cnt5 %>% rename(n5 = num_participants)
+
+tab_summary_stats <- tab_summary_stats %>%
+  left_join(x = ., y = tab1, by = "decision_point") %>%
+  left_join(x = ., y = tab2, by = "decision_point") %>%
+  left_join(x = ., y = tab4, by = "decision_point") %>%
+  left_join(x = ., y = tab5, by = "decision_point") %>%
+  left_join(x = ., y = tab3, by = "decision_point") %>%
+  mutate(remain = rowSums(cbind(tot, -n1, -n2, -n3, -n4, -n5), na.rm=TRUE))
+
+colnames(tab_summary_stats) <- c("Decision Point", "Total", "n1", "n2", "n4", "n5", "n3", "remain")
 ```
+
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 list_results <- binary_outcome_moderated_effect(dta = dat_exploratory_analysis,
@@ -465,8 +485,11 @@ row.names(dat_exp_results) <- paste("Risk Ratio at", 0:42, "Days elapsed since e
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
+options(knitr.kable.NA = '-')
+colnames(tab_summary_stats) <- c("Decision Point","Total","See Section 4, Table 5", "See Section 4, Table 6", "See Section 4, Table 8", "See Section 4, Table 9", "See Section 4, Table 7", "Remaining")
 kable(tab_summary_stats, format="latex", booktabs=TRUE) %>% 
-  kable_styling(latex_options = c("HOLD_position","scale_down"))
+  add_header_above(c(" "=1, " "=1, "Excluded" = 4, "Ineligible"=1, " "=1)) %>%
+  kable_styling(latex_options = c("HOLD_position", "scale_down"))
 
 kable(dat_results, format="latex", booktabs=TRUE) %>% 
   kable_styling(latex_options = c("HOLD_position")) %>% 
@@ -516,7 +539,7 @@ abline(h = 1, lty = 1, lwd = 5, col = "black")
 
 \newpage
 
-# Appendix for `Supplementary Results': Participants excluded from analyses -- breakdown by decision point and rationale
+# Supplemental Information for `Results of Sensitivity Analysis': Participants excluded from analyses -- breakdown by decision point and rationale
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 colnames(cnt1) <- c("Decision Point", "Number of Participants Excluded")
@@ -529,19 +552,19 @@ colnames(cnt5) <- c("Decision Point", "Number of Participants Excluded")
 
 
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
-kable(cnt1, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the fact that participants did not select their preferred Product or Charity at baseline") %>% 
+kable(cnt1, format="latex", booktabs=TRUE, caption = "No. of participants excluded due to the fact that participants did not select their preferred Product or Charity at baseline") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt2, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model") %>% 
+kable(cnt2, format="latex", booktabs=TRUE, caption = "No. of participants excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt3, format="latex", booktabs=TRUE, caption = "No. of participant-decision points excluded due to these participant-decision points not having a recorded randomization assignment at participant-decision points in which should have been randomized") %>% 
+kable(cnt3, format="latex", booktabs=TRUE, caption =  "No. of ineligible participants (i.e., who were classified as heavy drinkers at the prior self-monitoring assessment)") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt4, format="latex", booktabs=TRUE, caption = "No of participant-decision points excluded due to the fact that these participant-decision points came immediately after (i.e., time t+1) a decision point (i.e., time t) where the participant reported heavy drinking and hence were eligible for randomization (i.e., at time t+1). However, these participant-decision points did not have a record of the participant's randomization assignment present in the data.") %>% 
+kable(cnt4, format="latex", booktabs=TRUE, caption = "No. of eligible participants (i.e., who were not classified as heavy drinkers at the prior self-monitoring assessment) who did not have any randomization assignment") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt5, format="latex", booktabs=TRUE, caption = "No. of participant-decision points which were additionally excluded due to the fact that participants were not eligible for randomization at all decision points (e.g., if a participant was eligible for randomization at only the first and second decision point, but they were ineligible for randomization at the third and fourth decision point, then all their decision points were excluded)") %>% 
+kable(cnt5, format="latex", booktabs=TRUE, caption = "No. of participants who who were classified as heavy drinkers at any decision point") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 ```
 
