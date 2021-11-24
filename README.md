@@ -10,9 +10,9 @@ urlcolor: magenta
 
 ## About this Repository
 
-The material in this repository is a supplement to the manuscript titled _`Self-Interest vs. Prosocial Appeals to Engage: Leveraging Self-Relevance to Promote Self-Monitoring of Alcohol Use Among College Students'_, submitted for consideration to the journal, Health Psychology. This repository contains code and documentation relating to the curation of data and testing of hypotheses, as well as exploratory analyses for the MBRIDGE Micro-Randomized Trial.
+The material in this repository is a supplement to the manuscript titled _`Self-Interest vs. Prosocial Appeals to Engage: Leveraging Self-Relevance to Promote Self-Monitoring of Alcohol Use Among College Students'_, submitted for consideration to the journal, Health Psychology. This repository contains code and documentation relating to the curation of data and testing of hypotheses, as well as exploratory analyses for the MBRIDGE Micro-Randomized Trial (MRT).
 
-_Keywords: Causal Inference, Intensive Longitudinal Data, Adaptive Interventions, Mobile Health (mHealth), Micro-Randomized Trial_
+_Keywords: Causal Inference, Intensive Longitudinal Data, Adaptive Interventions, Mobile Health (mHealth), Micro-Randomized Trial (MRT)_
 
 ## Appendices to Manuscript
 

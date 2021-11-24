@@ -36,5 +36,5 @@ rm(list = ls())
 #-------------------------------------------------------------------------------
 # Display results of data analyses in a PDF file using R markdown
 #-------------------------------------------------------------------------------
-rmarkdown::render("do-main-analysis.Rmd")
+rmarkdown::render("analysis/do-main-analysis.Rmd")
 rm(list = ls())
