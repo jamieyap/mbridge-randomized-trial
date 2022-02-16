@@ -10,9 +10,13 @@ urlcolor: magenta
 
 ## About this Repository
 
-The material in this repository is a supplement to the manuscript titled _`Self-Interest vs. Prosocial Appeals to Engage: Leveraging Self-Relevance to Promote Self-Monitoring of Alcohol Use Among College Students'_, submitted for consideration to the journal, Health Psychology. This repository contains code and documentation relating to the curation of data and testing of hypotheses, as well as exploratory analyses for the MBRIDGE Micro-Randomized Trial (MRT).
+The material in this repository is a supplement to the manuscript titled _` Self-Relevant Appeals to Engage in Self-Monitoring of Alcohol Use: A Micro-randomized Trial'_, submitted for consideration to the journal, Health Psychology. This repository contains code and documentation relating to the curation of data and testing of hypotheses, as well as exploratory analyses for the MBRIDGE Micro-Randomized Trial (MRT).
 
 _Keywords: Causal Inference, Intensive Longitudinal Data, Adaptive Interventions, Mobile Health (mHealth), Micro-Randomized Trial (MRT)_
+
+## Data Sharing
+
+The investigative team recognizes the importance and benefit of sharing data from this research study to ensure accuracy of results via replication and reproduction, to increase generalizability of results, and to promote and facilitate future research in this area. It is our goal to make available data to external institutions. External investigators expressing an interest in accessing a particular data set will be required to sign a data sharing agreement that is approved by the University of Minnesota. Identifiers of raw data will be purged to protect subject confidentiality. A complete, cleaned, de-identified copy of the final dataset used in conducting the final analyses will be made available. The dataset will be available by request from the PI of R01 AA026574 (Patrick, M.E.)
 
 ## Appendices to Manuscript
 
