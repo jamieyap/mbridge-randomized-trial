@@ -10,7 +10,7 @@ urlcolor: magenta
 
 ## About this Repository
 
-The material in this repository is a supplement to the manuscript titled _` Self-Relevant Appeals to Engage in Self-Monitoring of Alcohol Use: A Micro-randomized Trial'_, submitted for consideration to the journal, Health Psychology. This repository contains code and documentation relating to the curation of data and testing of hypotheses, as well as exploratory analyses for the MBRIDGE Micro-Randomized Trial (MRT).
+The material in this repository is a supplement to the manuscript titled ` Self-Relevant Appeals to Engage in Self-Monitoring of Alcohol Use: A Micro-randomized Trial' (under review). This repository contains code and documentation relating to the curation of data and testing of hypotheses, as well as exploratory analyses for the Micro-Randomized Trial (MRT).
 
 _Keywords: Causal Inference, Intensive Longitudinal Data, Adaptive Interventions, Mobile Health (mHealth), Micro-Randomized Trial (MRT)_
 
