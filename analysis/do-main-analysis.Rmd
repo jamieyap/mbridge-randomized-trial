@@ -443,7 +443,7 @@ colnames(cnt4) <- c("Decision Point", "Number of Participants Excluded")
 kable(cnt1, format="latex", booktabs=TRUE, caption = "No. of participants excluded due to the fact that participants did not select their preferred Product or Charity at baseline") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
-kable(cnt2, format="latex", booktabs=TRUE, caption = "No. of participants excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model") %>% 
+kable(cnt2, format="latex", booktabs=TRUE, caption = "No. of participants excluded due to the fact that participants had missing values in any of the covariates utilized in the noise reduction model or in any of the candidate moderators") %>% 
   kable_styling(latex_options = c("HOLD_position"))
 
 kable(cnt3, format="latex", booktabs=TRUE, caption = "No. of ineligible participants (i.e., who were classified as heavy drinkers at the prior self-monitoring assessment)") %>% 
